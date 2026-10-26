@@ -124,7 +124,7 @@ kbd{font:700 14px/1 var(--f-mono);background:var(--amber);color:#1d1404;border-r
   <div id="prompt" class="card" hidden><kbd id="promptKey">E</kbd><span id="promptText">Enter Galleria</span></div>
   <div id="keys" class="card gutR gutB">
     <b>WASD</b><span>Walk · drive</span>
-    <b>Shift</b><span>Skateboard (hold)</span>
+    <b>Shift</b><span>Skateboard · sprint indoors</span>
     <b>Tab</b><span>Get in / out of the SUV</span>
     <b>Space</b><span>Jump · tap again to double jump</span>
     <b>Mouse</b><span>Look (click to lock)</span>
@@ -688,7 +688,7 @@ const board=new THREE.Group();
  for(const x of[-.09,.09])for(const z of[-.28,.28]){const w=new THREE.Mesh(wg,wm);w.position.set(x,.04,z);board.add(w);}
  for(const z of[-.28,.28]){const t=new THREE.Mesh(new THREE.BoxGeometry(.2,.03,.05),lam(0x8d9196));t.position.set(0,.075,z);board.add(t);}
  board.traverse(o=>{if(o.isMesh)o.castShadow=true;});board.position.y=-.12;board.visible=false;ph.g.add(board);}
-let skating=false,iceSkating=false,jumpQ=false;
+let skating=false,iceSkating=false,sprinting=false,jumpQ=false;
 const puffM=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
 const puffR=new THREE.Mesh(new THREE.RingGeometry(.3,.5,28).rotateX(-Math.PI/2),puffM);let puffT=0;
 function puff(){(mode==='room'?curRoom.scene:scene).add(puffR);puffR.position.set(P.pos.x,P.pos.y+.05,P.pos.z);puffT=1;}
@@ -1545,7 +1545,8 @@ function stepPlayer(dt){
   skating=mode==='out'&&!!(keys.ShiftLeft||keys.ShiftRight||skateToggle);
   iceSkating=mode==='room'&&!!curRoom.onIce&&curRoom.onIce(P.pos);
   const glide=skating||iceSkating,boost=keys.ShiftLeft||keys.ShiftRight||skateToggle;
-  const top=(skating?16.4:iceSkating?(boost?9.5:6.2):4.1)*Math.min(1,ml),cur=Math.hypot(P.vel.x,P.vel.z);
+  sprinting=mode==='room'&&!iceSkating&&boost&&ml>.05;
+  const top=(skating?16.4:iceSkating?(boost?9.5:6.2):sprinting?8.6:4.1)*Math.min(1,ml),cur=Math.hypot(P.vel.x,P.vel.z);
   if(ml>.05){mx/=ml;mz/=ml;let a=Math.atan2(mx,mz)-P.rot;a=Math.atan2(Math.sin(a),Math.cos(a));P.rot+=a*Math.min(1,dt*(skating?4.5:iceSkating?3.5:12));
     if(glide){mx=Math.sin(P.rot);mz=Math.cos(P.rot);}}
   const pushing=glide&&ml>.05&&cur<top*.9;
@@ -1566,7 +1567,8 @@ function stepPlayer(dt){
   ph.g.position.copy(P.pos);ph.g.position.y+=skating?.14:iceSkating?.1:.04;ph.g.rotation.y=P.rot+(P.spin>0?(1-P.spin)*Math.PI*2:0);board.visible=skating;blades.visible=iceSkating;
   if(P.spin>0&&!skating&&!iceSkating){const t=Math.sin(P.spin*Math.PI);ph.legL.rotation.x=ph.legR.rotation.x=-1.1*t;ph.armL.rotation.z=-1.2*t;ph.armR.rotation.z=1.2*t;}
   stepPuff(dt);
-  if(glide)skatePose(ph,pushing,dt);else animate(ph,Math.hypot(P.vel.x,P.vel.z),dt,!P.ground);}
+  if(glide)skatePose(ph,pushing,dt);else animate(ph,Math.hypot(P.vel.x,P.vel.z),dt,!P.ground);
+  ph.torso.rotation.x=sprinting&&P.ground?.2:0;if(sprinting&&P.ground){ph.armL.rotation.x*=1.5;ph.armR.rotation.x*=1.5;ph.legL.rotation.x*=1.25;ph.legR.rotation.x*=1.25;}}
 function carCollide(){const fx=Math.sin(V.h),fz=Math.cos(V.h);let hit=0;
   for(const off of[1.6,0,-1.6]){const p={x:V.pos.x+fx*off,z:V.pos.z+fz*off},bx=p.x,bz=p.z;collide(p,1.05,true);const dx=p.x-bx,dz=p.z-bz;if(dx||dz){V.pos.x+=dx;V.pos.z+=dz;hit+=Math.hypot(dx,dz);}}
   return hit;}
@@ -1599,7 +1601,7 @@ function stepCamera(dt){
   tgt.set(P.pos.x,P.pos.y+(inCar?2.0:1.55),P.pos.z);
   if(inCar&&performance.now()-lastLook>1200){let d=(V.h+Math.PI)-cam.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));cam.yaw+=d*Math.min(1,dt*(1.5+Math.abs(V.speed)*.06));cam.pitch+=(.2-cam.pitch)*Math.min(1,dt*1.5);}
   const maxD=mode==='room'?Math.min(cam.dist,curRoom.camMax,shopCur?3.6:99):inCar?cam.dist+4+Math.abs(V.speed)*.07:cam.dist;
-  const fov=inCar?60+Math.min(16,Math.abs(V.speed)*.35):skating?60+Math.min(6,Math.hypot(P.vel.x,P.vel.z)*.35):60;
+  const fov=inCar?60+Math.min(16,Math.abs(V.speed)*.35):(skating||sprinting)?60+Math.min(6,Math.hypot(P.vel.x,P.vel.z)*.45):60;
   if(Math.abs(camera.fov-fov)>.05){camera.fov+=(fov-camera.fov)*Math.min(1,dt*3);camera.updateProjectionMatrix();}
   dirv.set(Math.sin(cam.yaw)*Math.cos(cam.pitch),Math.sin(cam.pitch),Math.cos(cam.yaw)*Math.cos(cam.pitch));
   ray.set(tgt,dirv);ray.far=maxD+.4;const hits=ray.intersectObjects(mode==='room'?curRoom.blockers:blockers,false);
@@ -1623,7 +1625,7 @@ function stepHUD(dt){
   if(prod){const locked=!!document.pointerLockElement;shopHint.hidden=isTouch||!locked;shopHintText.textContent='Free the mouse to click Learn more';}
   const near=!prod&&nearDoor()&&!busy&&!V.active;promptEl.hidden=!near;
   if(near)promptText.textContent=mode==='out'?near.label:near.sub?near.sub.label:curRoom.exitText;
-  if(hudT>.12){hudT=0;moveModeEl.textContent=V.active?'Black SUV':skating?'Skateboard':iceSkating?'Ice skates':'On foot';
+  if(hudT>.12){hudT=0;moveModeEl.textContent=V.active?'Black SUV':skating?'Skateboard':iceSkating?'Ice skates':sprinting?'Sprinting':'On foot';
     moveSpdEl.textContent=Math.round((V.active?Math.abs(V.speed):Math.hypot(P.vel.x,P.vel.z))*2.237);timeEl.textContent=fmtTime(clockMin);dayEl.textContent='Day '+dayN;
     const[n,s,e]=locate();const key=n+s+e;if(key!==lastLoc){lastLoc=key;locName.textContent=n;locSub.textContent=s;locEye.textContent=e;}}
   drawMinimap();}

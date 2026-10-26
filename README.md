@@ -10,7 +10,7 @@ Open `index.html` in a browser to play. It loads three.js r128 from cdnjs and fo
 | --- | --- |
 | WASD / arrows | Walk, drive |
 | Mouse (click to lock) | Look |
-| Shift (hold) | Skateboard |
+| Shift (hold) | Skateboard outdoors, sprint indoors |
 | Tab | Get in / out of the black SUV |
 | Space | Jump, tap again to double jump (handbrake in the SUV) |
 | E | Enter / exit doors, free the mouse at Apple product tables |
