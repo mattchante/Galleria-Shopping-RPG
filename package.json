@@ -1,0 +1,28 @@
+{
+  "name": "galleria-streets",
+  "private": true,
+  "version": "0.10.0",
+  "description": "Third-person Stick RPG-style game set around Galleria Dallas, built with three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:single": "vite build --mode single",
+    "preview": "vite preview",
+    "smoke": "node scripts/smoke.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "prettier": "3.9.10",
+    "vite": "8.3.4",
+    "vite-plugin-singlefile": "2.3.3"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
