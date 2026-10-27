@@ -72,8 +72,9 @@ export function buildShops(ctx) {
   const zs = [-60, -48, -36, -24, -12, 0];
   // ---- level 1: shops, with one double-width tech flagship on the east side facing the rink
   const L1 = {
-    1: ['SOLE DISTRICT', 'ATELIER NOIR', null, null, 'BLOOM BEAUTY', 'MERIDIAN WATCH'],
-    '-1': [null, null, 'PARLOR SWEETS', null, 'STUDIO K', null],
+    // east z -18..6 is the walk-in pet store (pet-store.js); west z -12 is plain wall
+    1: ['SOLE DISTRICT', 'ATELIER NOIR', null, null, null, null],
+    '-1': [null, null, 'PARLOR SWEETS', null, null, null],
   };
   for (const s of [-1, 1]) {
     const fx = s * W;
@@ -96,7 +97,7 @@ export function buildShops(ctx) {
       B(0.08, 0.08, 10.6, metal, fx - s * 0.08, 4.02, zc);
     });
     for (let z = -66; z <= 6; z += 12) {
-      if ((s > 0 && z === -30) || (s < 0 && z < -40)) continue;
+      if ((s > 0 && (z === -30 || z === -6)) || (s < 0 && z < -40)) continue;
       B(0.5, L2 - 0.02, 1.4, stone, fx - s * 0.25, L2 / 2, z);
     }
   }

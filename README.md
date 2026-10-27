@@ -44,7 +44,7 @@ Phones get an on-screen stick and buttons.
 - Real building footprints: the Galleria's towers and garages, the Westin, Nordstrom and its garage at Noel & Alpha, Le Méridien, Residence Inn
 - Macy's pink-granite clock entrance on Noel Rd, the way into the mall
 - Target (enterable) and a McDonald's at Montfort & LBJ
-- Two-level Galleria interior: shops, a walk-in Apple store with product tables that link to apple.com, a walk-in Sephora, CCR Gallery (framed photographs, canvases and sculpture), a two-floor Barnes & Noble (café, staircase, level-2 windows, entrances from both mall levels), a skateable ice rink with a Christmas tree, and a food court with open kitchens and moving escalators
+- Two-level Galleria interior: shops, a walk-in Apple store with product tables that link to apple.com, a walk-in Sephora, CCR Gallery (framed photographs, canvases and sculpture), Diamond’s Dogs (a cat adoption wall and a puppy playpen), a two-floor Barnes & Noble (café, staircase, level-2 windows, entrances from both mall levels), a skateable ice rink with a Christmas tree, and a food court with open kitchens and moving escalators
 
 ## Project layout
 

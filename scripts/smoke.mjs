@@ -30,6 +30,10 @@ const SHOTS = [
   { name: 'ice-rink', room: 'galleria', x: 3.5, z: -30, y: 0.12, yaw: -0.4, pitch: 0.3, dist: 6 },
   { name: 'sephora', room: 'galleria', x: -14.2, z: -24, yaw: Math.PI / 2, pitch: 0.28, dist: 5 },
   { name: 'ccr-gallery', room: 'galleria', x: -15.6, z: 1.4, yaw: 1.35, pitch: 0.12, dist: 4.5 },
+  { name: 'pet-store', room: 'galleria', x: 15, z: -6, yaw: -1.2, pitch: 0.32, dist: 6 },
+  { name: 'puppy-pen', room: 'galleria', x: 20, z: -5, yaw: Math.PI - 0.5, pitch: 0.55, dist: 6 },
+  { name: 'cat-wall', room: 'galleria', x: 24.5, z: -9.6, yaw: -Math.PI / 2, pitch: 0.15, dist: 4.5 },
+  { name: 'studio-k-wall', room: 'galleria', x: -4, z: -12, yaw: Math.PI / 2, pitch: 0.2, dist: 7 },
   { name: 'barnes-noble', room: 'galleria', x: 4, z: -83.3, yaw: -0.9, pitch: 0.3, dist: 7 },
   { name: 'bn-stairs', room: 'galleria', x: 17, z: -76, yaw: -2.2, pitch: 0.3, dist: 9 },
   { name: 'bn-level-2', room: 'galleria', x: -10, z: -92, y: 5.5, yaw: -0.8, pitch: 0.18, dist: 7 },
@@ -192,6 +196,21 @@ try {
   await frames(4);
   const gaPlace = await page.evaluate(() => window.__g.info().place);
   check('CCR Gallery walk-in', gaX < -13 && gaPlace === 'CCR Gallery', `x ${gaX.toFixed(1)} · ${gaPlace}`);
+  const petX = await page.evaluate(() => {
+    const g = window.__g;
+    g.teleport({ x: 9, z: -6, yaw: -Math.PI / 2 });
+    g.keys.KeyW = true;
+    g.sim(2);
+    g.keys.KeyW = false;
+    return g.P.pos.x;
+  });
+  await frames(4);
+  const petPlace = await page.evaluate(() => window.__g.info().place);
+  check(
+    'pet store walk-in',
+    petX > 14 && petPlace === 'Diamond’s Dogs',
+    `x ${petX.toFixed(1)} · ${petPlace}`,
+  );
   await frames(2);
 } catch (e) {
   errors.push(String(e));

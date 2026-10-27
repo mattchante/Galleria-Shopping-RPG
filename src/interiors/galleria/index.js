@@ -13,6 +13,7 @@ import { buildIceRink } from './ice-rink.js';
 import { buildAppleStore } from './apple-store.js';
 import { buildSephora } from './sephora.js';
 import { buildCcrGallery } from './ccr-gallery.js';
+import { buildPetStore } from './pet-store.js';
 import { buildBookstore, BZ } from './bookstore.js';
 /* ---------- Galleria interior: two levels under a glass barrel vault ---------- */
 
@@ -143,8 +144,13 @@ function buildGalleria() {
   const { fxA, glowM, seated } = ctx;
   // ---- walls, anchor, entrance, vault
   for (const s of [-1, 1]) {
-    if (s > 0) B(0.6, L2, 82, stone, s * (W + 0.3), L2 / 2, -28, true);
-    else {
+    if (s > 0) {
+      // east wall, open from z -17.3 to 5.3 for the pet store (pillars at z -18 and 6 frame it)
+      B(0.6, L2, 51.7, stone, W + 0.3, L2 / 2, -43.15, true);
+      B(0.6, L2, 7.7, stone, W + 0.3, L2 / 2, 9.15, true);
+      S_(W - 0.5, W + 0.6, -18.7, -17.3, 0, L2);
+      S_(W - 0.5, W + 0.6, 5.3, 6.7, 0, L2);
+    } else {
       B(0.6, L2, 2.6, stone, -(W + 0.3), L2 / 2, -67.7, true);
       B(0.6, L2, 12, stone, -(W + 0.3), L2 / 2, -35.6, true);
       B(0.6, L2, 12.8, stone, -(W + 0.3), L2 / 2, -12, true);
@@ -395,9 +401,10 @@ function buildGalleria() {
   const { AP, PRODUCTS } = ctx;
   buildSephora(ctx);
   buildCcrGallery(ctx);
+  buildPetStore(ctx);
   ctx.blk = blk;
   buildBookstore(ctx);
-  const { SE, sephoraArea, GA, ccrArea, ccrMobile, bnFloorsAt, bnLabelAt, BN } = ctx;
+  const { SE, sephoraArea, GA, ccrArea, ccrMobile, bnFloorsAt, bnLabelAt, BN, PS, petArea, petUpdate } = ctx;
   for (let i = 0; i < 3; i++) {
     const h = mkH();
     sc.add(h.g);
@@ -452,6 +459,10 @@ function buildGalleria() {
         return ['CCR Gallery', ccrArea(p), 'Galleria Dallas'];
       if (p.y < 3 && p.x < -9 && p.z > GA.z1 && p.z < GA.z2)
         return ['Galleria · Level 1', 'CCR Gallery entrance', 'Galleria Dallas'];
+      if (p.y < 3 && p.x > W && p.z > PS.z1 && p.z < PS.z2)
+        return ['Diamond’s Dogs', petArea(p), 'Galleria Dallas'];
+      if (p.y < 3 && p.x > 9 && p.z > PS.ez1 && p.z < PS.ez2)
+        return ['Galleria · Level 1', 'Diamond’s Dogs entrance', 'Galleria Dallas'];
       if (p.y < 3 && p.x < -W) {
         const q = this.productAt(p);
         return ['Apple', q ? q.n + ' table' : 'Store · Level 1', 'Galleria Dallas'];
@@ -474,8 +485,13 @@ function buildGalleria() {
         return ['Galleria · Level 1', 'Rinkside · gates east & west', 'Galleria Dallas'];
       return ['Galleria · Level 1', 'Shops', 'Galleria Dallas'];
     },
-    camRM: { x1: -22, x2: 22, z1: BZ - 34, z2: M.z2, h: M.h },
+    camRM: { x1: -22, x2: PS.x2, z1: BZ - 34, z2: M.z2, h: M.h },
     clampXZ(p, r) {
+      if (p.y < 3 && p.x > W - r && p.z > PS.z1 - 0.5 && p.z < PS.z2 + 0.5) {
+        p.x = Math.min(p.x, PS.x2 - r);
+        if (p.x > W + r) p.z = clamp(p.z, PS.z1 + r, PS.z2 - r);
+        return;
+      }
       if (p.y < 3 && p.x < -W + r && p.z > AP.z1 - 0.5 && p.z < AP.z2 + 0.5) {
         p.x = Math.max(p.x, AP.x1 + r);
         return;
@@ -522,6 +538,7 @@ function buildGalleria() {
     },
     update(dt) {
       if (ccrMobile) ccrMobile.rotation.y += dt * 0.25;
+      petUpdate(dt);
       stepT.offset.y -= dt * 6;
       if (RINKX.vid) RINKX.vid.offset.x += dt * 0.02;
       {
@@ -591,6 +608,10 @@ function buildGalleria() {
         g.fillRect(X(GA.x1), Z(GA.z1), (GA.x2 - GA.x1) * k, (GA.z2 - GA.z1) * k);
         g.fillStyle = '#141414';
         g.fillText('CCR GALLERY', X(-18), Z(0.6));
+        g.fillStyle = '#e9f3ef';
+        g.fillRect(X(PS.x1), Z(PS.z1), (PS.x2 - PS.x1) * k, (PS.z2 - PS.z1) * k);
+        g.fillStyle = '#2f8f8a';
+        g.fillText('PETS', X((PS.x1 + PS.x2) / 2), Z(-9));
         g.fillStyle = '#c9a477';
         for (const q of PRODUCTS) g.fillRect(X(q.x1), Z(q.z1), (q.x2 - q.x1) * k, (q.z2 - q.z1) * k);
       }
