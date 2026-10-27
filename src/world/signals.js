@@ -1,6 +1,6 @@
 // Street-name blades, traffic signals, stop signs and highway guide signs.
 import * as THREE from 'three';
-import { INTS, RD, SW } from './layout.js';
+import { G, INTS, RD, SW, sAt } from './layout.js';
 import { scene } from '../core/renderer.js';
 import { posAt, segAt, solids, tex } from '../core/helpers.js';
 import { MAT, box } from '../core/materials.js';
@@ -85,7 +85,8 @@ const headGeo = new THREE.BoxGeometry(0.42, 1.25, 0.32),
 function travels(r, sI) {
   const g = segAt(r, sI),
     t = new Set();
-  for (const l of r.lanesDef) t.add((g.d[0] * l.d).toFixed(0) + ',' + (g.d[1] * l.d).toFixed(0));
+  const q = (v) => Math.round(v) || 0; // the || 0 turns -0 into 0
+  for (const l of r.lanesDef) t.add(q(g.d[0] * l.d) + ',' + q(g.d[1] * l.d));
   return t;
 }
 for (const I of INTS) {
@@ -226,35 +227,36 @@ function guideTex(lines, dir, shield) {
   });
 }
 function gantry(r, s, a, b) {
-  const [cx, cz, g] = posAt(r, s, 0);
-  const along = g.axis;
+  const [cx, cz, g] = posAt(r, s, 0),
+    head = Math.atan2(g.d[0], g.d[1]);
   for (const o of [-r.w / 2 + 0.4, r.w / 2 - 0.4]) {
     const [x, z] = posAt(r, s, o);
     box(0.5, 7, 0.5, MAT.pole, x, 12.7, z);
   }
-  if (along === 'z') box(r.w, 0.5, 0.6, MAT.pole, cx, 16, cz);
-  else box(0.6, 0.5, r.w, MAT.pole, cx, 16, cz);
+  const beam = box(r.w, 0.5, 0.6, MAT.pole, cx, 16, cz);
+  beam.rotation.y = head;
   for (const sg of [a, b]) {
     const [x, z] = posAt(r, s, sg.o);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(10.5, 2.6), new THREE.MeshBasicMaterial({ map: sg.t }));
     m.position.set(x, 14.2, z);
-    m.rotation.y = sg.face;
+    m.rotation.y = head + (sg.back ? Math.PI : 0);
     m.translateZ(0.35);
     scene.add(m);
   }
 }
-// DNT: southbound traffic (west side, o>0) faces north; northbound faces south.
+// A sign faces the traffic driving toward it. Traffic on the o > 0 side drives along the road's
+// direction (southbound on the Tollway, eastbound on LBJ), so its sign is turned back (back: true).
 gantry(
   RD.dnt,
-  1240,
-  { o: 6.2, face: Math.PI, t: guideTex('DALLAS NORTH TOLLWAY', 'SOUTH', 'toll') },
-  { o: -6.2, face: 0, t: guideTex('DALLAS NORTH TOLLWAY', 'NORTH', 'toll') },
+  sAt(RD.dnt, ...G([-366, -90])),
+  { o: 6.2, back: true, t: guideTex('DALLAS NORTH TOLLWAY', 'SOUTH', 'toll') },
+  { o: -6.2, back: false, t: guideTex('DALLAS NORTH TOLLWAY', 'NORTH', 'toll') },
 );
 gantry(
   RD.i635,
-  1550,
-  { o: 6.2, face: -Math.PI / 2, t: guideTex('LBJ FREEWAY', 'EAST', 'i') },
-  { o: -6.2, face: Math.PI / 2, t: guideTex('LBJ FREEWAY', 'WEST', 'i') },
+  sAt(RD.i635, ...G([120, 762])),
+  { o: 6.2, back: true, t: guideTex('LBJ FREEWAY', 'EAST', 'i') },
+  { o: -6.2, back: false, t: guideTex('LBJ FREEWAY', 'WEST', 'i') },
 );
 
 export { LAMP, LAMPCOL, LAMPDIM, rrect, signPlane, textTex };

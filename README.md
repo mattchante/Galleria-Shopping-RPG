@@ -11,13 +11,13 @@ npm install
 npm run dev          # local dev server with hot reload, usually http://localhost:5173
 ```
 
-| Script                 | What it does                                                                                                                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`          | Dev server. The debug hook `window.__g` is available in the console.                                                                                                                                         |
-| `npm run build`        | Production build to `dist/` (what GitHub Pages serves).                                                                                                                                                      |
-| `npm run build:single` | One self-contained `dist-single/index.html` (everything inlined), handy for sharing a single file or a Claude artifact.                                                                                      |
-| `npm run preview`      | Serves `dist/` locally to check a production build.                                                                                                                                                          |
-| `npm run smoke`        | Headless smoke test of `dist/`: visits ten places outdoors and indoors, checks driving, sprinting, the escalator and the Apple product card, writes screenshots to `smoke-output/`, fails on any page error. |
+| Script                 | What it does                                                                                                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Dev server. The debug hook `window.__g` is available in the console.                                                                                                                                                                          |
+| `npm run build`        | Production build to `dist/` (what GitHub Pages serves).                                                                                                                                                                                       |
+| `npm run build:single` | One self-contained `dist-single/index.html` (everything inlined), handy for sharing a single file or a Claude artifact.                                                                                                                       |
+| `npm run preview`      | Serves `dist/` locally to check a production build.                                                                                                                                                                                           |
+| `npm run smoke`        | Headless smoke test of `dist/`: visits places outdoors and indoors, checks driving, the Macy's door, sprinting, the escalator, the walk-in stores and the Apple product card, writes screenshots to `smoke-output/`, fails on any page error. |
 
 Run `npm run build` before `npm run smoke`, and once per machine `npx playwright install chromium`.
 
@@ -40,7 +40,9 @@ Phones get an on-screen stick and buttons.
 
 ## What's in it
 
-- Half-scale street grid with signal-timed traffic, pedestrians, the elevated Tollway and I-635
+- The real street grid traced from OpenStreetMap at half scale: Alpha, Noel, Montfort's curve, Peterson, James Temple, the Dallas Pkwy frontage roads, Inwood, Galleria Rd and the LBJ frontage, with signal-timed traffic, pedestrians, and the elevated Tollway and I-635
+- Real building footprints: the Galleria's towers and garages, the Westin, Nordstrom and its garage at Noel & Alpha, Le Méridien, Residence Inn
+- Macy's pink-granite clock entrance on Noel Rd, the way into the mall
 - Target (enterable) and a McDonald's at Montfort & LBJ
 - Two-level Galleria interior: shops, a walk-in Apple store with product tables that link to apple.com, a walk-in Sephora, CCR Gallery (framed photographs, canvases and sculpture), a two-floor Barnes & Noble (café, staircase, level-2 windows, entrances from both mall levels), a skateable ice rink with a Christmas tree, and a food court with open kitchens and moving escalators
 

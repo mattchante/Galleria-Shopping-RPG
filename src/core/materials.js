@@ -162,7 +162,7 @@ function roadMat(r) {
       }
     }
   });
-  return decal(lam(0xffffff, { map: t }), r.segs[0].axis === 'x' ? 2 : 3);
+  return decal(lam(0xffffff, { map: t }), r.horiz ? 2 : 3);
 }
 function flat(x1, x2, z1, z2, y, mat, tile, parent = scene) {
   const w = x2 - x1,

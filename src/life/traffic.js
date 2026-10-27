@@ -1,7 +1,7 @@
 // Traffic lanes, instanced cars, signal timing and the traffic simulation.
 import * as THREE from 'three';
 import { state, late } from '../core/state.js';
-import { DNTX, INTS, RD, ROADS, SW } from '../world/layout.js';
+import { INTS, RD, ROADS, SW, sAt } from '../world/layout.js';
 import { scene } from '../core/renderer.js';
 import { clamp, lam, pick, posAt, rand, solids } from '../core/helpers.js';
 import { LAMP, LAMPCOL, LAMPDIM } from '../world/signals.js';
@@ -26,18 +26,32 @@ for (const r of ROADS) {
     }
   }
 }
-// how traffic gets on and off roads that end inside the map
-const xAt = (r, x) => Math.abs(x - r.pts[0][0]);
-RD.noel.lanes[0].onEnd = { to: RD.lbj.lanes[1], s: xAt(RD.lbj, -1.75) + 3 };
-RD.noel.lanes[1].onEnd = { to: RD.lbj.lanes[2], s: xAt(RD.lbj, -5.25) + 3 };
-RD.lbj.lanes[2].branch = { s: xAt(RD.lbj, 5.5), p: 0.3, to: RD.noel.lanes[3], toS: RD.noel.L - 14 };
-RD.noel.lanes[2].onEnd = { to: RD.noel.lanes[0], s: 0 };
-RD.noel.lanes[3].onEnd = { to: RD.noel.lanes[1], s: 0 };
-for (let i = 0; i < 3; i++) {
-  RD.dnt.lanes[i].onEnd = { to: RD.i635.lanes[i], s: xAt(RD.i635, DNTX) + 8 };
-  RD.dnt.lanes[3 + i].onEnd = { to: RD.dnt.lanes[i], s: 0 };
+// How traffic gets on and off roads that end inside the map. Roads that run off the map simply wrap.
+{
+  const lbj = RD.lbj,
+    noel = RD.noel,
+    sNoel = sAt(lbj, ...noel.pts[noel.pts.length - 1]);
+  // Noel southbound turns west onto the LBJ frontage road; some frontage traffic turns north onto Noel
+  noel.lanes[0].onEnd = { to: lbj.lanes[1], s: sNoel + 3 };
+  noel.lanes[1].onEnd = { to: lbj.lanes[2], s: sNoel + 3 };
+  lbj.lanes[2].branch = { s: sNoel - 8, p: 0.3, to: noel.lanes[3], toS: noel.L - 14 };
+  noel.lanes[2].onEnd = { to: noel.lanes[0], s: 0 };
+  noel.lanes[3].onEnd = { to: noel.lanes[1], s: 0 };
+  // Dallas Pkwy northbound forks off Inwood Rd north of Alpha, and loops back to Inwood's far south end
+  const fork = sAt(RD.inwood, ...RD.pkwyW.pts[0]);
+  for (let i = 0; i < 3; i++) {
+    RD.pkwyW.lanes[i].onEnd = { to: RD.inwood.lanes[i], s: 0 };
+  }
+  RD.inwood.lanes[2].branch = { s: fork, p: 0.5, to: RD.pkwyW.lanes[2], toS: 0 };
+  RD.inwood.lanes[1].branch = { s: fork, p: 0.3, to: RD.pkwyW.lanes[1], toS: 0 };
+  // the Tollway ends at LBJ: southbound joins eastbound LBJ, westbound LBJ feeds the northbound Tollway
+  const sJoin = sAt(RD.i635, ...RD.dnt.pts[RD.dnt.pts.length - 1]);
+  for (let i = 0; i < 3; i++) {
+    RD.dnt.lanes[i].onEnd = { to: RD.i635.lanes[i], s: sJoin + 8 };
+    RD.dnt.lanes[3 + i].onEnd = { to: RD.dnt.lanes[i], s: 0 };
+  }
+  RD.i635.lanes[5].branch = { s: sJoin + 9, p: 0.35, to: RD.dnt.lanes[5], toS: RD.dnt.L - 16 };
 }
-RD.i635.lanes[5].branch = { s: xAt(RD.i635, DNTX + 9), p: 0.35, to: RD.dnt.lanes[5], toS: RD.dnt.L - 16 };
 const movers = lanes.flatMap((l) => l.cars);
 const NCAR = movers.length + parked.length;
 const IM = {

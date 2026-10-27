@@ -6,198 +6,314 @@
 const SW = 4,
   K = 0.5;
 // sidewalk width, map compression
-const BOUNDS = { x1: -272, x2: 450, z1: -114, z2: 464 };
-function catmull(P, per) {
-  const out = [];
-  for (let i = 0; i < P.length - 1; i++) {
-    const p0 = P[Math.max(0, i - 1)],
-      p1 = P[i],
-      p2 = P[i + 1],
-      p3 = P[Math.min(P.length - 1, i + 2)];
-    for (let k = 0; k < per; k++) {
-      const t = k / per,
-        t2 = t * t,
-        t3 = t2 * t;
-      out.push(
-        [0, 1].map(
-          (j) =>
-            0.5 *
-            (2 * p1[j] +
-              (-p0[j] + p2[j]) * t +
-              (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 +
-              (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3),
-        ),
-      );
-    }
-  }
-  out.push(P[P.length - 1]);
-  return out;
-}
-const DNTX = -212.5,
-  PKE = DNTX + 35,
-  PKW = DNTX - 35,
-  LBJZ = 445,
-  I635Z = 481;
-const MED = [PKW + 6 + SW, PKE - 6 - SW];
-// ground strip under the Tollway between the frontage sidewalks
-const MONTFORT = [
-  [272.5, -1300],
-  ...catmull(
-    [
-      [272.5, 24],
-      [286, 40],
-      [308, 60],
-      [338, 84],
-      [366, 106],
-      [386, 126],
-      [394, 145],
-    ],
-    3,
-  ),
-  [394, 1600],
+/* Real geometry. Everything below is written in real metres from OpenStreetMap (projected around the
+   Noel Rd / Alpha Rd intersection: x east, z south) and squeezed to game units by G(). Road and sidewalk
+   widths stay full size, so buildings that would crowd a road are trimmed by clipRect(). */
+const RX = 6.5,
+  RZ = -7; // real-world point that becomes the game origin (centre of Noel Rd at Alpha Rd)
+const G = ([x, z]) => [+((x - RX) * K).toFixed(2), +((z - RZ) * K).toFixed(2)];
+const box4 = (b) => {
+  const [x1, z1] = G([b[0], b[2]]),
+    [x2, z2] = G([b[1], b[3]]);
+  return [x1, x2, z1, z2];
+};
+const road = (o) => Object.assign(o, { pts: o.pts.map(G) });
+// The Dallas North Tollway centreline (elevated) and LBJ's main lanes (elevated in the game).
+const DNT_PTS = [
+  [-367, -2600],
+  [-366, -50],
+  [-363, 10],
+  [-357, 46],
+  [-349, 100],
+  [-334, 160],
+  [-316, 218],
+  [-304, 265],
+  [-299, 313],
+  [-296, 346],
+  [-296, 409],
+  [-296, 487],
+  [-290, 566],
+  [-281, 635],
+  [-268, 700],
+  [-258, 762],
 ];
+const LBJ_MAIN_Z = 762,
+  FRONT_Z = 711;
 const ROADS = [
-  {
+  road({
     id: 'alpha',
     name: 'Alpha Rd',
     pts: [
-      [-1300, 0],
-      [1600, 0],
+      [-2600, RZ],
+      [3200, RZ],
     ],
     w: 18,
     type: 'two4',
     spd: 13,
     traffic: true,
-  },
-  {
+  }),
+  road({
     id: 'noel',
     name: 'Noel Rd',
     pts: [
-      [0, -1300],
-      [0, LBJZ],
+      [RX, -2600],
+      [RX, FRONT_Z],
     ],
     w: 16,
     type: 'two4',
     spd: 13,
     traffic: true,
-  },
-  { id: 'montfort', name: 'Montfort Dr', pts: MONTFORT, w: 16, type: 'two4', spd: 12, traffic: true },
-  {
+  }),
+  road({
+    id: 'montfort',
+    name: 'Montfort Dr',
+    pts: [
+      [400, -2600],
+      [433, -213],
+      [440, -140],
+      [446, -55],
+      [450, RZ],
+      [456, 30],
+      [466, 55],
+      [481, 78],
+      [500, 96],
+      [530, 113],
+      [560, 130],
+      [592, 152],
+      [607, 168],
+      [620, 195],
+      [632, 230],
+      [636, 260],
+      [636, 340],
+      [635, 410],
+      [634, 509],
+      [640, 600],
+      [642, 680],
+      [642, 760],
+      [643, 812],
+      [645, 1300],
+    ],
+    w: 16,
+    type: 'two4',
+    spd: 12,
+    traffic: true,
+  }),
+  // Dallas Pkwy southbound frontage road, east side of the Tollway
+  road({
     id: 'pkwyE',
     name: 'Dallas Pkwy',
     pts: [
-      [PKE, 1600],
-      [PKE, -1300],
+      [-338, -2600],
+      [-335, -307],
+      [-331, -150],
+      [-334, -60],
+      [-337, 0],
+      [-336, 40],
+      [-329, 78],
+      [-297, 187],
+      [-267, 296],
+      [-264, 340],
+      [-266, 384],
+      [-270, 417],
+      [-271, 479],
+      [-258, 536],
+      [-250, 570],
+      [-247, 600],
+      [-200, 760],
+      [-140, 1300],
     ],
     w: 12,
     type: 'one3',
     spd: 16,
     traffic: true,
-  },
-  {
+  }),
+  // Dallas Pkwy northbound frontage road: forks off Inwood Rd just north of Alpha
+  road({
     id: 'pkwyW',
     name: 'Dallas Pkwy',
     pts: [
-      [PKW, -1300],
-      [PKW, 1600],
+      [-466, -30],
+      [-448, -38],
+      [-433, -50],
+      [-415, -78],
+      [-405, -97],
+      [-401, -140],
+      [-400, -244],
+      [-394, -300],
+      [-380, -2600],
     ],
     w: 12,
     type: 'one3',
     spd: 16,
     traffic: true,
-  },
-  {
+  }),
+  // Inwood Rd: the northbound frontage south of Alpha, angling west away from the Tollway
+  road({
+    id: 'inwood',
+    name: 'Inwood Rd',
+    pts: [
+      [-250, 1300],
+      [-290, 760],
+      [-318, 640],
+      [-322, 600],
+      [-322, 530],
+      [-325, 476],
+      [-337, 440],
+      [-350, 400],
+      [-352, 375],
+      [-358, 362],
+      [-369, 326],
+      [-379, 293],
+      [-458, 30],
+      [-462, 0],
+      [-466, -30],
+      [-472, -60],
+      [-482, -106],
+      [-488, -137],
+      [-550, -342],
+      [-700, -2600],
+    ],
+    w: 12,
+    type: 'one3',
+    spd: 15,
+    traffic: true,
+  }),
+  // LBJ north frontage road (westbound), straight east of Noel, then rising toward the Tollway
+  road({
     id: 'lbj',
     name: 'LBJ Fwy',
     pts: [
-      [1700, LBJZ],
-      [-1300, LBJZ],
+      [3200, FRONT_Z],
+      [-6, FRONT_Z],
+      [-37, 697],
+      [-53, 686],
+      [-158, 607],
+      [-184, 594],
+      [-246, 583],
+      [-322, 592],
+      [-371, 607],
+      [-439, 658],
+      [-470, 676],
+      [-507, 690],
+      [-555, 699],
+      [-806, 705],
+      [-2600, 700],
     ],
     w: 12,
     type: 'one3',
     spd: 15,
     traffic: true,
-  },
-  {
+  }),
+  // LBJ south frontage road (eastbound), past the fence
+  road({
     id: 'lbjS',
     name: 'LBJ Fwy',
     pts: [
-      [-1300, LBJZ + 72],
-      [1700, LBJZ + 72],
+      [-2600, 880],
+      [100, 812],
+      [3200, 812],
     ],
     w: 12,
     type: 'one3',
     spd: 15,
     traffic: true,
-  },
-  {
+  }),
+  road({
     id: 'peterson',
     name: 'Peterson Ln',
     pts: [
-      [0, 155],
-      [394, 155],
+      [RX, 247],
+      [636, 247],
     ],
     w: 11,
     type: 'two2',
-  },
-  {
+  }),
+  road({
     id: 'jtemple',
     name: 'James Temple Dr',
     pts: [
-      [0, 255],
-      [394, 255],
+      [RX, 408],
+      [635, 408],
     ],
     w: 12,
     type: 'two2',
-  },
-  {
-    id: 'bryce',
-    name: 'Bryce Ln',
+  }),
+  road({
+    id: 'access',
+    name: 'Access Rd',
     pts: [
-      [0, 346.5],
-      [124, 346.5],
+      [208, 408],
+      [208, FRONT_Z],
     ],
     w: 10,
     type: 'two2',
-  },
-  {
-    id: 'cornell',
-    name: 'Cornell Dr',
+  }),
+  road({
+    id: 'galleria',
+    name: 'Galleria Rd',
     pts: [
-      [124, 255],
-      [124, LBJZ],
+      [-215, 386],
+      [-520, 386],
+    ],
+    w: 12,
+    type: 'two2',
+  }),
+  road({
+    id: 'cityview',
+    name: 'City View Ave',
+    pts: [
+      [157, RZ],
+      [158, -41],
+      [168, -74],
+      [170, -600],
     ],
     w: 10,
     type: 'two2',
-  },
-  {
+  }),
+  road({
+    id: 'barton',
+    name: 'Barton Dr',
+    pts: [
+      [-200, RZ],
+      [-200, -600],
+    ],
+    w: 10,
+    type: 'two2',
+  }),
+  road({
     id: 'dnt',
     name: 'Dallas N Tollway',
-    pts: [
-      [DNTX, -1300],
-      [DNTX, I635Z - 6],
-    ],
+    pts: DNT_PTS,
     w: 26,
     type: 'hwy',
     spd: 27,
     traffic: true,
     elevated: true,
-  },
-  {
+  }),
+  road({
     id: 'i635',
     name: 'I-635 LBJ Fwy',
     pts: [
-      [-1400, I635Z],
-      [1900, I635Z],
+      [-2800, LBJ_MAIN_Z],
+      [3800, LBJ_MAIN_Z],
     ],
     w: 28,
     type: 'hwy',
     spd: 28,
     traffic: true,
     elevated: true,
-  },
+  }),
 ];
-function prepRoad(r) {
+function distSeg(px, pz, s) {
+  const vx = s.b[0] - s.a[0],
+    vz = s.b[1] - s.a[1];
+  let t = ((px - s.a[0]) * vx + (pz - s.a[1]) * vz) / (s.len * s.len);
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const qx = s.a[0] + vx * t - px,
+    qz = s.a[1] + vz * t - pz;
+  return Math.sqrt(qx * qx + qz * qz);
+}
+function mkSegs(r) {
   r.segs = [];
   let s = 0;
   for (let i = 0; i < r.pts.length - 1; i++) {
@@ -220,6 +336,25 @@ function prepRoad(r) {
     s += len;
   }
   r.L = s;
+}
+ROADS.forEach(mkSegs);
+// A road that ends close to another road's centreline is snapped onto it, so T-junctions line up.
+for (const r of ROADS) {
+  if (r.elevated) continue;
+  for (const end of [0, r.pts.length - 1]) {
+    const p = r.pts[end];
+    for (const o of ROADS) {
+      if (o === r || o.elevated) continue;
+      for (const s of o.segs) {
+        if (distSeg(p[0], p[1], s) > 4) continue;
+        const t = Math.max(0, Math.min(s.len, (p[0] - s.a[0]) * s.d[0] + (p[1] - s.a[1]) * s.d[1]));
+        r.pts[end] = [s.a[0] + s.d[0] * t, s.a[1] + s.d[1] * t];
+      }
+    }
+  }
+}
+ROADS.forEach(mkSegs);
+function prepRoad(r) {
   const w = r.w;
   r.bb = [
     Math.min(...r.pts.map((p) => p[0])) - w,
@@ -227,6 +362,13 @@ function prepRoad(r) {
     Math.min(...r.pts.map((p) => p[1])) - w,
     Math.max(...r.pts.map((p) => p[1])) + w,
   ];
+  let ex = 0,
+    ez = 0;
+  for (const g of r.segs) {
+    ex += Math.abs(g.b[0] - g.a[0]);
+    ez += Math.abs(g.b[1] - g.a[1]);
+  }
+  r.horiz = ex > ez;
   if (r.type === 'two4') {
     const lw = (w - 2) / 4;
     r.lines = [
@@ -282,59 +424,76 @@ function prepRoad(r) {
     ];
   }
   if (!r.traffic) r.lanesDef = [];
-  r.y = r.elevated ? 9.25 : r.segs[0].axis === 'x' ? 0.02 : 0.026;
+  r.y = r.elevated ? 9.25 : r.horiz ? 0.02 : 0.026;
 }
 ROADS.forEach(prepRoad);
 const RD = Object.fromEntries(ROADS.map((r) => [r.id, r]));
+// arc length along road r of the point nearest (x, z)
+function sAt(r, x, z) {
+  let best = 1e9,
+    bs = 0;
+  for (const g of r.segs) {
+    const t = Math.max(0, Math.min(g.len, (x - g.a[0]) * g.d[0] + (z - g.a[1]) * g.d[1]));
+    const d = Math.hypot(g.a[0] + g.d[0] * t - x, g.a[1] + g.d[1] * t - z);
+    if (d < best) {
+      best = d;
+      bs = g.s0 + t;
+    }
+  }
+  return bs;
+}
+/* Intersections. Real streets meet at slight angles; where one road runs roughly east-west (E) and the
+   other roughly north-south (N), the crossing is treated as a square intersection at the true crossing point. */
+const NEAR = 0.22;
 function computeInts() {
   const out = [],
-    G = ROADS.filter((r) => !r.elevated);
-  for (let i = 0; i < G.length; i++)
-    for (let j = i + 1; j < G.length; j++)
-      for (const sa of G[i].segs)
-        for (const sb of G[j].segs) {
+    Gr = ROADS.filter((r) => !r.elevated);
+  for (let i = 0; i < Gr.length; i++)
+    for (let j = i + 1; j < Gr.length; j++)
+      for (const sa of Gr[i].segs)
+        for (const sb of Gr[j].segs) {
           let E, N, se, sn;
-          if (sa.axis === 'x' && sb.axis === 'z') {
-            E = G[i];
-            N = G[j];
-            se = sa;
-            sn = sb;
-          } else if (sa.axis === 'z' && sb.axis === 'x') {
-            E = G[j];
-            N = G[i];
-            se = sb;
-            sn = sa;
+          if (Math.abs(sa.d[1]) < NEAR && Math.abs(sb.d[0]) < NEAR) {
+            [E, N, se, sn] = [Gr[i], Gr[j], sa, sb];
+          } else if (Math.abs(sa.d[0]) < NEAR && Math.abs(sb.d[1]) < NEAR) {
+            [E, N, se, sn] = [Gr[j], Gr[i], sb, sa];
           } else continue;
-          const z = se.a[1],
-            x = sn.a[0],
-            x0 = Math.min(se.a[0], se.b[0]),
-            x1 = Math.max(se.a[0], se.b[0]),
-            z0 = Math.min(sn.a[1], sn.b[1]),
-            z1 = Math.max(sn.a[1], sn.b[1]);
-          if (x < x0 - 0.01 || x > x1 + 0.01 || z < z0 - 0.01 || z > z1 + 0.01) continue;
+          // solve se.a + t*se.d = sn.a + u*sn.d
+          const den = se.d[0] * sn.d[1] - se.d[1] * sn.d[0];
+          if (Math.abs(den) < 1e-6) continue;
+          const qx = sn.a[0] - se.a[0],
+            qz = sn.a[1] - se.a[1];
+          const t = (qx * sn.d[1] - qz * sn.d[0]) / den,
+            u = (qx * se.d[1] - qz * se.d[0]) / den;
+          if (t < -0.05 || t > se.len + 0.05 || u < -0.05 || u > sn.len + 0.05) continue;
+          const x = se.a[0] + se.d[0] * t,
+            z = se.a[1] + se.d[1] * t;
+          if (out.some((o) => o.E === E && o.N === N && Math.hypot(o.x - x, o.z - z) < 4)) continue;
+          const sE = se.s0 + Math.max(0, Math.min(se.len, t)),
+            sN = sn.s0 + Math.max(0, Math.min(sn.len, u));
+          const eB = sE > 1.5,
+            eA = sE < E.L - 1.5,
+            nB = sN > 1.5,
+            nA = sN < N.L - 1.5;
           out.push({
             x,
             z,
             E,
             N,
-            sE: se.s0 + Math.abs(x - se.a[0]),
-            sN: sn.s0 + Math.abs(z - sn.a[1]),
-            ext: { w: x - x0 > 1, e: x1 - x > 1, n: z - z0 > 1, s: z1 - z > 1 },
+            sE,
+            sN,
+            ext: {
+              w: se.d[0] > 0 ? eB : eA,
+              e: se.d[0] > 0 ? eA : eB,
+              n: sn.d[1] > 0 ? nB : nA,
+              s: sn.d[1] > 0 ? nA : nB,
+            },
             sig: !!(E.traffic && N.traffic),
           });
         }
   return out;
 }
 const INTS = computeInts();
-function distSeg(px, pz, s) {
-  const vx = s.b[0] - s.a[0],
-    vz = s.b[1] - s.a[1];
-  let t = ((px - s.a[0]) * vx + (pz - s.a[1]) * vz) / (s.len * s.len);
-  t = t < 0 ? 0 : t > 1 ? 1 : t;
-  const qx = s.a[0] + vx * t - px,
-    qz = s.a[1] + vz * t - pz;
-  return Math.sqrt(qx * qx + qz * qz);
-}
 function distRoad(r, x, z) {
   let m = 1e9;
   for (const s of r.segs) {
@@ -409,128 +568,261 @@ function clipRect(b, m) {
   }
   return b;
 }
-const S = (b) => [b[0] * K, b[1] * K, b[2] * K, b[3] * K, ...b.slice(4)];
-const TGT = [210, 350, 280, 361];
-// Target store footprint
-const MCD = [342, 366, 392, 410];
-// McDonald's at Montfort & LBJ
-const MCDPAD = [336, 380, 378, 433];
-// its drive-thru loop
-const MALLF = 65;
-// north face of the mall's north anchor
-// [x1,x2,z1,z2,height,facade,tint,label]
-const BUILDINGS = [
+// keeps a footprint off the Tollway's support columns
+function clipDNT(b) {
+  for (let it = 0; it < 200 && b; it++) {
+    if (rectDistRoad(b, RD.dnt) > RD.dnt.w / 2 + 2) return b;
+    if (distRoad(RD.dnt, b[0], (b[2] + b[3]) / 2) < distRoad(RD.dnt, b[1], (b[2] + b[3]) / 2)) b[0] += 1;
+    else b[1] -= 1;
+    if (b[1] - b[0] < 8) return null;
+  }
+  return b;
+}
+const fit = (b, m = 2) => {
+  const c = clipRect(box4(b), m);
+  return c && clipDNT(c);
+};
+// [real x1, x2, z1, z2, height, facade, tint]
+const MCY = fit([-92, -17, 238, 356]); // Macy's, entrance on Noel Rd
+const NGAR = fit([-81, -46, 13, 196]); // Nordstrom parking garage at Noel & Alpha
+const TGT = fit([384, 471, 425, 579]); // Target
+const MCD = fit([560, 604, 626, 650]); // McDonald's at Montfort & LBJ
+const MCDPAD = box4([546, 612, 612, 690]); // its lot and drive-thru loop
+const REAL_BUILDINGS = [
+  // north of Alpha Rd, west of Noel
+  [-188, -11, -176, -145, 16, 'apt', 0xeadfca],
+  [-188, -150, -145, -122, 16, 'apt', 0xeadfca],
+  [-60, -11, -145, -123, 16, 'apt', 0xeadfca],
+  [-186, -149, -107, -47, 8, 'store', 0xe6d6bd],
+  [-141, -70, -107, -40, 8, 'store', 0xe9dcc4],
+  [-64, -26, -111, -74, 9, 'store', 0xe7e1d5],
+  [-60, -23, -74, -41, 8, 'store', 0xe6d6bd],
+  [-260, -207, -156, -44, 10, 'store', 0xe9dcc4],
+  // north of Alpha Rd, east of Noel
+  [25, 81, -109, -44, 10, 'glass', 0x7a9ab0],
+  [189, 233, -57, -31, 8, 'store', 0xe9dcc4],
+  [196, 228, -160, -105, 12, 'brick', 0xa86450],
+  [268, 283, -159, -122, 10, 'store', 0xe7e1d5],
+  [303, 320, -55, -22, 8, 'store', 0xe6d6bd],
+  [305, 349, -172, -139, 8, 'store', 0xe9dcc4],
+  [357, 417, -57, -33, 9, 'store', 0xe7e1d5],
+  [389, 408, -101, -69, 8, 'glass', 0x6c8fa8],
+  // east of Montfort, north of Alpha (apartments)
+  [481, 531, -170, -144, 14, 'apt', 0xe8dcc5],
+  [594, 640, -165, -139, 14, 'apt', 0xe8dcc5],
+  [665, 691, -159, -141, 14, 'apt', 0xe8dcc5],
+  [715, 772, -161, -142, 14, 'apt', 0xe8dcc5],
+  [484, 525, -105, -65, 14, 'apt', 0xe3d2b4],
+  [572, 622, -123, -62, 14, 'apt', 0xe3d2b4],
+  [661, 710, -119, -79, 14, 'apt', 0xe3d2b4],
+  [748, 767, -123, -103, 14, 'apt', 0xe3d2b4],
+  [468, 523, -44, -19, 12, 'apt', 0xece2cf],
+  [530, 601, -42, -19, 12, 'apt', 0xece2cf],
+  [606, 662, -42, -19, 12, 'apt', 0xece2cf],
+  [669, 742, -63, -32, 7, 'store', 0xe9dcc4],
+  [745, 777, -63, -43, 7, 'store', 0xe7e1d5],
   // west of the Tollway
-  [-320, -262, -90, -22, 46, 'glass', 0x7a9ab0],
-  [-320, -262, 20, 100, 60, 'glass', 0x6687a0],
-  [-320, -262, 130, 210, 30, 'apt', 0xe4d6bc],
-  [-320, -262, 240, 320, 40, 'glass', 0x8aa4b6],
-  [-320, -262, 350, 430, 24, 'brick', 0xa86450],
-  ...[
-    // north side of Alpha Rd
-    [-330, -260, -150, -28, 38, 'glass', 0x87a3b3],
-    [-230, -150, -80, -24, 9, 'store', 0xe6d6bd],
-    [-120, -24, -170, -26, 24, 'apt', 0xeadfca],
-    [22, 120, -60, -22, 6, 'store', 0xe9dcc4],
-    [22, 130, -210, -90, 18, 'apt', 0xd9cdb6],
-    [170, 300, -170, -30, 30, 'glass', 0x6c8fa8],
-    [330, 500, -190, -36, 20, 'brick', 0xb4664d],
-    [575, 700, -180, -30, 22, 'apt', 0xe8dcc5],
-    [730, 880, -200, -40, 14, 'brick', 0x9c5642],
-    // Galleria office towers + garages along Noel
-    [-80, -28, 280, 330, 100, 'glass', 0x6f9cc0],
-    [-80, -28, 420, 470, 126, 'glass', 0x5f8fb6],
-    [-80, -28, 560, 610, 95, 'glass', 0x7aa5c4],
-    [-146, -92, 140, 240, 14, 'garage', 0xd9d6cf],
-    [-145, -95, 280, 340, 16, 'garage', 0xd9d6cf],
-    [-145, -95, 430, 520, 16, 'garage', 0xd9d6cf],
-    // Noel to Montfort, Alpha to Peterson
-    [25, 140, 25, 150, 22, 'apt', 0xeadfca],
-    [25, 100, 190, 295, 48, 'glass', 0x8c95a3, 'meridien'],
-    [180, 330, 25, 75, 12, 'store', 0xe7e1d5],
-    [250, 330, 110, 280, 36, 'glass', 0x6a93b4],
-    [380, 450, 40, 280, 20, 'apt', 0xe3d2b4],
-    [470, 520, 30, 90, 10, 'store', 0xe9dcc4],
-    [480, 600, 130, 290, 20, 'brick', 0xa65e48],
-    [660, 800, 25, 100, 14, 'apt', 0xece2cf],
-    [815, 900, 140, 290, 26, 'glass', 0x7d9bb0],
-    // Peterson to James Temple
-    [20, 190, 328, 495, 18, 'apt', 0xe6d8bf, 'verona'],
-    [225, 380, 328, 495, 16, 'brick', 0xa15c45],
-    [420, 620, 340, 490, 26, 'glass', 0x58748a],
-    [650, 770, 330, 495, 14, 'apt', 0xd6c6aa],
-    // south of James Temple
-    [15, 232, 528, 678, 32, 'glass', 0x6f8fa8],
-    [15, 232, 708, 872, 12, 'store', 0xe7e1d5],
-    [300, 600, 776, 872, 8, 'store', 0xebe2d0, 'crossings'],
-    // east of Montfort
-    [815, 900, 330, 500, 18, 'apt', 0xe6d8bf],
-    [815, 900, 540, 700, 22, 'brick', 0xa15c45],
-    [815, 900, 740, 870, 14, 'apt', 0xece2cf],
-  ].map(S),
-  [...TGT, 10, 'store', 0xeeebe5, 'target'],
-  [...MCD, 6, 'store', 0xd6c9b2, 'mcd'],
+  [-459, -402, 242, 371, 14, 'apt', 0xe4d6bc],
+  [-385, -347, 498, 581, 115, 'glass', 0x6687a0],
+  [-434, -405, 14, 72, 6, 'store', 0xe6d6bd],
+  [-411, -383, 88, 145, 6, 'store', 0xe9dcc4],
+  [-389, -361, 161, 219, 6, 'store', 0xe6d6bd],
+  [-368, -339, 234, 292, 6, 'store', 0xe9dcc4],
+  [-345, -316, 307, 363, 6, 'store', 0xe6d6bd],
+  [-488, -463, 590, 634, 30, 'glass', 0x8aa4b6],
+  [-497, -433, 498, 530, 40, 'glass', 0x7a9ab0],
+  [-497, -418, 416, 471, 10, 'garage', 0xd9d6cf],
+  [-402, -381, 348, 371, 10, 'brick', 0xa86450],
+  // Galleria Dallas: garages and towers around the mall
+  [-300, -190, 15, 80, 15, 'garage', 0xe0b48a], // Orange Garage
+  [-300, -256, 100, 145, 12, 'store', 0xe6d6bd], // American Girl
+  [-83, -13, 197, 235, 97, 'glass', 0x6f9cc0], // Two Galleria Tower
+  [-87, -12, 361, 390, 100, 'glass', 0x5f8fb6], // One Galleria Tower
+  [-85, -28, 416, 586, 21, 'garage', 0xe2cf8a], // Yellow Garage
+  [-29, -13, 426, 492, 6, 'store', 0xe7e1d5],
+  [-72, -22, 610, 662, 109, 'glass', 0x7aa5c4], // Three Galleria Tower
+  [-160, -97, 495, 620, 18, 'garage', 0x9fb4c8], // Blue Garage
+  [-220, -160, 510, 570, 15, 'garage', 0xd9d6cf],
+  [-212, -161, 272, 357, 72, 'glass', 0x8a9aa6], // The Westin Galleria
+  // Noel to Montfort, Alpha to Peterson
+  [27, 65, 12, 36, 7, 'store', 0xe9dcc4],
+  [92, 108, 12, 36, 7, 'store', 0xe7e1d5],
+  [125, 140, 13, 43, 7, 'store', 0xe6d6bd],
+  [142, 214, 26, 52, 7, 'store', 0xe9dcc4],
+  [219, 244, 19, 43, 7, 'store', 0xe7e1d5],
+  [281, 307, 20, 39, 9, 'glass', 0x7d9bb0],
+  [311, 352, 21, 51, 9, 'store', 0xe6d6bd],
+  [370, 415, 25, 54, 9, 'glass', 0x6c8fa8],
+  [417, 445, 28, 60, 8, 'store', 0xe9dcc4],
+  [167, 181, 63, 192, 16, 'apt', 0xeadfca],
+  [273, 288, 64, 193, 16, 'apt', 0xeadfca],
+  [200, 259, 73, 90, 16, 'apt', 0xeadfca],
+  [200, 216, 95, 177, 16, 'apt', 0xeadfca],
+  [237, 254, 131, 177, 16, 'apt', 0xeadfca],
+  [198, 260, 182, 197, 16, 'apt', 0xeadfca],
+  [174, 281, 210, 228, 16, 'apt', 0xeadfca],
+  [291, 330, 60, 95, 14, 'brick', 0xa65e48],
+  [373, 413, 61, 96, 14, 'brick', 0xa65e48],
+  [338, 368, 114, 168, 14, 'brick', 0xa65e48],
+  [421, 521, 108, 169, 8, 'store', 0xe7e1d5],
+  [544, 573, 16, 91, 8, 'store', 0xe9dcc4],
+  [586, 613, 60, 124, 7, 'store', 0xe6d6bd],
+  [581, 609, 214, 232, 6, 'store', 0xd6c9b2],
+  [674, 712, 173, 214, 8, 'store', 0xe9dcc4],
+  [682, 698, 23, 51, 7, 'store', 0xe7e1d5],
+  [730, 743, 24, 52, 7, 'store', 0xe6d6bd],
+  [26, 93, 191, 231, 40, 'glass', 0x8c95a3], // Le Méridien
+  // Peterson to James Temple
+  [43, 75, 286, 362, 52, 'apt', 0xe6d8bf], // 13330 Noel Rd tower
+  [23, 80, 256, 284, 11, 'apt', 0xe6d8bf],
+  [23, 79, 365, 393, 11, 'apt', 0xe6d8bf],
+  [348, 403, 262, 300, 12, 'brick', 0xa15c45],
+  [451, 507, 262, 281, 12, 'brick', 0xa15c45],
+  [347, 385, 300, 374, 12, 'brick', 0xa15c45],
+  [412, 506, 295, 375, 12, 'brick', 0xa15c45],
+  [530, 569, 301, 395, 10, 'store', 0xe7e1d5],
+  [578, 603, 275, 387, 7, 'store', 0xe9dcc4],
+  // James Temple to LBJ
+  [122, 198, 424, 507, 14, 'apt', 0xd9c8a8], // Residence Inn
+  [129, 169, 590, 617, 8, 'store', 0xe7e1d5],
+  [140, 177, 627, 681, 8, 'store', 0xe6d6bd],
+  [226, 353, 413, 471, 13, 'garage', 0xd9d6cf],
+  [248, 330, 482, 530, 10, 'glass', 0x58748a],
+  [227, 275, 612, 688, 36, 'glass', 0x6f8fa8],
+  [300, 361, 632, 685, 22, 'glass', 0x7d9bb0],
+  [391, 463, 579, 629, 7, 'store', 0xebe2d0],
+  [380, 428, 653, 681, 6, 'store', 0xe7e1d5],
+  [443, 458, 651, 702, 6, 'store', 0xe9dcc4],
+  [538, 609, 419, 460, 7, 'store', 0xe6d6bd],
+];
+const BUILDINGS = [
+  ...REAL_BUILDINGS.map((b) => {
+    const c = fit(b);
+    return c ? [...c, ...b.slice(4)] : null;
+  }),
+  [...NGAR, 19, 'garage', 0xdcd8cf],
+  [...TGT, 10, 'store', 0xeeebe5],
+  [...MCD, 6, 'store', 0xd6c9b2],
+].filter(Boolean);
+// Galleria Dallas: the mall blocks (pink granite), Nordstrom at the north end, Macy's on Noel
+const MALL = [
+  [-170, -90, 86, 200, 20, 'stone', 0xe3cdbd],
+  [-195, -92, 200, 272, 20, 'stone', 0xe3cdbd],
+  [-161, -92, 272, 356, 20, 'stone', 0xe3cdbd],
+  [-198, -93, 356, 410, 20, 'stone', 0xe3cdbd],
+  [-175, -93, 410, 470, 18, 'stone', 0xe3cdbd],
+  [-195, -125, 455, 515, 16, 'stone', 0xdcc4b2],
+  [-183, -82, 12, 86, 22, 'stone', 0xd8bfae], // Nordstrom
+  [-225, -150, 100, 180, 16, 'stone', 0xcfc4b8], // Netflix House
 ]
   .map((b) => {
-    const c = clipRect(b.slice(0, 4), 2);
+    const c = fit(b);
     return c ? [...c, ...b.slice(4)] : null;
   })
-  .filter(Boolean);
-const MALL = [
-  // Galleria Dallas: main concourse, north anchor (entrance), south anchor, hotel tower
-  [-160, -75, 100, 310, 20, 'stone', 0xf2eadb],
-  [-150, -85, MALLF, 115, 22, 'stone', 0xd9ccb3],
-  [-150, -85, 300, 345, 24, 'stone', 0xddd1bb],
-  [-169, -149, 190, 220, 64, 'glass', 0x7c97a8],
-].map((b) => [...clipRect(b.slice(0, 4), 2), ...b.slice(4)]);
+  .filter(Boolean)
+  .concat([[...MCY, 24, 'stone', 0xc9988a]]);
+// the barrel-vaulted skylight along the mall's spine (game units)
+const VAULT = { x: G([-131, 0])[0], z1: G([0, 95])[1], z2: G([0, 400])[1] };
 const LOTS = [
-  { x1: -166, x2: -12, z1: 9, z2: MALLF - 6, walk: [-120.5, -114.5], fire: true, occ: 0.62 },
-  { x1: -166, x2: -10, z1: 351, z2: 438, occ: 0.42 },
-  { x1: 131, x2: 202, z1: 262, z2: 378, occ: 0.45 },
-  { x1: 312, x2: 336, z1: 375, z2: 433, occ: 0.5 },
-];
-LOTS.forEach((L) => {
-  const c = clipRect([L.x1, L.x2, L.z1, L.z2], 0.5);
-  [L.x1, L.x2, L.z1, L.z2] = c;
-});
+  { b: [336, 376, 480, 582], walk: [355, 361], occ: 0.55, id: 'target' },
+  { b: [40, 98, 438, 475], occ: 0.45 },
+  { b: [127, 197, 510, 540], occ: 0.4 },
+  { b: [28, 88, 640, 678], occ: 0.4 },
+  { b: [221, 276, 552, 606], occ: 0.5 },
+  { b: [301, 366, 552, 627], occ: 0.5 },
+  { b: [126, 163, 56, 134], occ: 0.5 },
+]
+  .map((L) => {
+    const c = clipRect(box4(L.b), 0.5);
+    if (!c) return null;
+    const [x1, x2, z1, z2] = c;
+    return Object.assign(L, { x1, x2, z1, z2, walk: L.walk && L.walk.map((x) => G([x, 0])[0]) });
+  })
+  .filter(Boolean);
+const TLOT = LOTS.find((L) => L.id === 'target');
+const [, MACY_DOOR_Z] = G([0, 271]);
 const DOORS = [
   {
     id: 'galleria',
-    x: -117.5,
-    z: MALLF - 4,
+    x: MCY[1] + 2.6,
+    z: MACY_DOOR_Z,
     label: 'Enter Galleria',
     pin: 'G',
-    exit: { x: -117.5, z: MALLF - 7.2, rot: Math.PI },
+    exit: { x: MCY[1] + 5, z: MACY_DOOR_Z, rot: Math.PI / 2 },
   },
   {
     id: 'target',
     x: TGT[0] - 4.4,
-    z: 320,
+    z: G([0, 520])[1],
     label: 'Enter Target',
     pin: 'T',
-    exit: { x: TGT[0] - 7.6, z: 320, rot: -Math.PI / 2 },
+    exit: { x: TGT[0] - 7.6, z: G([0, 520])[1], rot: -Math.PI / 2 },
   },
 ];
+// labelled places for the minimap and the location readout, in game units
+const PLACES = [
+  // top: checked before street names, so the entrances read as places, not as the street outside
+  {
+    r: [MCY[1] - 1, MCY[1] + 6, G([0, 271])[1] - 7, G([0, 271])[1] + 7],
+    n: 'Galleria Dallas',
+    s: 'Macy’s entrance on Noel Rd · open',
+    top: true,
+  },
+  {
+    r: [TGT[0] - 9, TGT[0], G([0, 520])[1] - 9, G([0, 520])[1] + 9],
+    n: 'Target',
+    s: 'Front entrance · open',
+    top: true,
+  },
+  { r: [...MCY], n: 'Macy’s', s: 'Galleria Dallas · Noel Rd entrance', map: 'MACY’S' },
+  { r: [...NGAR], n: 'Nordstrom Garage', s: 'Galleria Dallas · Noel Rd at Alpha Rd', map: 'GARAGE' },
+  { r: box4([-183, -82, 12, 86]), n: 'Nordstrom', s: 'Galleria Dallas · north anchor', map: 'NORDSTROM' },
+  { r: box4([-212, -161, 272, 357]), n: 'The Westin Galleria', s: 'Hotel · Galleria Dallas', map: 'WESTIN' },
+  { r: box4([-225, -150, 100, 180]), n: 'Netflix House', s: 'Galleria Dallas', map: 'NETFLIX HOUSE' },
+  { r: box4([-300, -190, 15, 80]), n: 'Orange Garage', s: 'Galleria Dallas parking', map: '' },
+  { r: box4([-160, -97, 495, 620]), n: 'Blue Garage', s: 'Galleria Dallas parking', map: '' },
+  { r: box4([-85, -28, 416, 586]), n: 'Yellow Garage', s: 'Galleria Dallas parking', map: '' },
+  { r: box4([-83, -13, 197, 235]), n: 'Two Galleria Tower', s: 'Offices · 13455 Noel Rd', map: '' },
+  { r: box4([-87, -12, 361, 390]), n: 'One Galleria Tower', s: 'Offices · 13355 Noel Rd', map: '' },
+  { r: box4([-81, -12, 604, 670]), n: 'Three Galleria Tower', s: 'Offices · 13155 Noel Rd', map: '' },
+  { r: box4([26, 93, 191, 231]), n: 'Le Méridien Dallas', s: 'Hotel · Noel Rd', map: 'LE MÉRIDIEN' },
+  { r: box4([122, 198, 424, 507]), n: 'Residence Inn', s: 'Hotel · James Temple Dr', map: 'RESIDENCE INN' },
+  {
+    r: [MCDPAD[0] - 2, MCDPAD[1] + 2, MCDPAD[2] - 2, MCDPAD[3] + 2],
+    n: 'McDonald’s',
+    s: 'Montfort Dr at LBJ Fwy',
+    map: 'McDONALD’S',
+  },
+  { r: [TGT[0] - 9, TGT[1], TGT[2], TGT[3]], n: 'Target', s: 'Montfort Dr at LBJ Fwy', map: 'TARGET' },
+  { r: [TLOT.x1, TLOT.x2, TLOT.z1, TLOT.z2], n: 'Target', s: 'Parking lot', map: '' },
+  {
+    r: box4([-198, -82, 86, 470]),
+    n: 'Galleria Dallas',
+    s: 'Mall · doors on Noel Rd at Macy’s',
+    map: 'GALLERIA',
+  },
+];
+const BOUNDS = { x1: -250, x2: 345, z1: -104, z2: 368 };
 
 export {
   BOUNDS,
   BUILDINGS,
-  DNTX,
   DOORS,
-  I635Z,
+  G,
   INTS,
-  LBJZ,
   LOTS,
   MALL,
-  MALLF,
   MCD,
   MCDPAD,
-  MED,
-  PKE,
-  PKW,
+  MCY,
+  NGAR,
+  PLACES,
   RD,
   ROADS,
   SW,
   TGT,
+  TLOT,
+  VAULT,
   distRoad,
+  sAt,
 };

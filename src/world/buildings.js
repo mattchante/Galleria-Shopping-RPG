@@ -1,6 +1,6 @@
 // Building blocks, the Galleria exterior and the distant skyline fill.
 import * as THREE from 'three';
-import { BOUNDS, BUILDINGS, MALL, MALLF } from './layout.js';
+import { BOUNDS, BUILDINGS, MALL, VAULT } from './layout.js';
 import { scene } from '../core/renderer.js';
 import { SHAD, blockers, lam, pick, rand, solids } from '../core/helpers.js';
 import { MAT, ROOF, TEXCFG, bmat, box, flat, mapRect } from '../core/materials.js';
@@ -51,11 +51,9 @@ function building(x1, x2, z1, z2, h, type, tint, opts = {}) {
 }
 for (const b of BUILDINGS) building(b[0], b[1], b[2], b[3], b[4], b[5], b[6]);
 // Galleria Dallas
-flat(-168, -12, MALLF - 3, 350, 0.012, MAT.pad, 2);
 for (const b of MALL)
   building(b[0], b[1], b[2], b[3], b[4], b[5], b[6], {
     map: '#8b7a5c',
-    pad: false,
     noRoof: b[5] === 'stone',
   });
 {
@@ -68,19 +66,19 @@ for (const b of MALL)
     side: THREE.DoubleSide,
   });
   const v1 = new THREE.Mesh(
-    new THREE.CylinderGeometry(11, 11, 190, 28, 1, true, 0, Math.PI)
+    new THREE.CylinderGeometry(9, 9, VAULT.z2 - VAULT.z1, 28, 1, true, 0, Math.PI)
       .rotateZ(Math.PI / 2)
       .rotateY(Math.PI / 2),
     glassM,
   );
-  v1.position.set(-117.5, 20, 205);
+  v1.position.set(VAULT.x, 20, (VAULT.z1 + VAULT.z2) / 2);
   v1.castShadow = true;
   scene.add(v1);
   const v2 = new THREE.Mesh(
-    new THREE.CylinderGeometry(7, 7, 75, 24, 1, true, 0, Math.PI).rotateZ(Math.PI / 2),
+    new THREE.CylinderGeometry(6, 6, 34, 24, 1, true, 0, Math.PI).rotateZ(Math.PI / 2),
     glassM,
   );
-  v2.position.set(-117.5, 20, 205);
+  v2.position.set(VAULT.x, 20, (VAULT.z1 + VAULT.z2) / 2);
   scene.add(v2);
 }
 // distant fill so the horizon is not empty

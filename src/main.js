@@ -116,8 +116,8 @@ startBtn.addEventListener('click', () => {
     $('#touch').hidden = false;
     $('#keys').hidden = true;
   }
-  cam.yaw = Math.PI;
-  cam.pitch = 0.28;
+  cam.yaw = P.rot + Math.PI; // behind the player, who starts facing Macy's entrance
+  cam.pitch = 0.22;
   canvas.focus();
   if (!isTouch) {
     try {

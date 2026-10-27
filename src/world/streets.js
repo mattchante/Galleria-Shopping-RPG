@@ -1,17 +1,15 @@
 // Road surfaces, intersections, crosswalks, sidewalks and the elevated Tollway and I-635.
-import { BOUNDS, I635Z, INTS, MED, RD, ROADS, SW, distRoad } from './layout.js';
+import { BOUNDS, INTS, RD, ROADS, SW, distRoad } from './layout.js';
 import { MAPDRAW, blockers, decal, lam, posAt, scaleUV, segAt, solids, tex } from '../core/helpers.js';
-import { MAT, box, flat, mapRect, ribbon, roadMat } from '../core/materials.js';
-import { MAPMAX, MAPMIN } from './sky.js';
+import { MAT, box, flat, ribbon, roadMat } from '../core/materials.js';
 
 /* ---------- roads ---------- */
 for (const r of ROADS) {
   ribbon(r, 0, r.L, -r.w / 2, r.w / 2, r.y, roadMat(r), 'road');
   MAPDRAW.push({ k: 'road', r });
 }
-// under-Tollway median between the Dallas Pkwy frontage roads
-flat(MED[0], MED[1], -1500, 1900, 0.015, MAT.pad, 4);
-mapRect(MED[0], MED[1], MAPMIN.z, MAPMAX.z, '#6f6c63');
+// paved ground under the elevated Tollway
+ribbon(RD.dnt, 0, RD.dnt.L, -RD.dnt.w / 2 - 1, RD.dnt.w / 2 + 1, 0.015, MAT.pad, 'walk');
 /* ---------- intersections: patches, crosswalks, corners ---------- */
 const zebraV = tex(32, 8, (g, w, h) => {
   g.fillStyle = '#3a3c3f';
@@ -118,27 +116,42 @@ function onGroundRoad(x, z, pad) {
   }
   return null;
 }
+// a box laid along a road segment: length runs with the road, o = sideways offset from the centreline
+function segBox(g, t0, t1, w, h, y, mat, o = 0) {
+  const t = (t0 + t1) / 2,
+    m = box(w, h, t1 - t0, mat, g.a[0] + g.d[0] * t + g.rt[0] * o, y, g.a[1] + g.d[1] * t + g.rt[1] * o);
+  m.rotation.y = Math.atan2(g.d[0], g.d[1]);
+  return m;
+}
 for (const r of [RD.dnt, RD.i635]) {
-  const g = r.segs[0],
-    ax = g.axis,
-    mid = r.L / 2,
-    [cx, cz] = posAt(r, mid, 0),
-    L = r.L;
-  const deck = ax === 'z' ? box(r.w, 1.2, L, MAT.deck, cx, 8.6, cz) : box(L, 1.2, r.w, MAT.deck, cx, 8.6, cz);
-  blockers.push(deck);
-  for (const o of [-r.w / 2 + 0.3, r.w / 2 - 0.3, 0]) {
-    const t = o === 0 ? 0.9 : 0.6;
-    if (ax === 'z') box(t, 1.05, L, MAT.barrier, cx + o, 9.75, cz);
-    else box(L, 1.05, t, MAT.barrier, cx, 9.75, cz + o);
+  for (const g of r.segs) {
+    // only build the stretch near the map; a little overlap hides the joints between segments
+    let t0 = 1e9,
+      t1 = -1e9;
+    for (let t = 0; t <= g.len; t += 4) {
+      const x = g.a[0] + g.d[0] * t,
+        z = g.a[1] + g.d[1] * t;
+      if (inView(x, z, 260)) {
+        t0 = Math.min(t0, t);
+        t1 = Math.max(t1, t);
+      }
+    }
+    if (t0 > t1) continue;
+    t0 = Math.max(0, t0 - 4);
+    t1 = Math.min(g.len, t1 + 4);
+    const ov = g.s0 > 0 ? 1.5 : 0;
+    blockers.push(segBox(g, t0 - ov, t1, r.w, 1.2, 8.6, MAT.deck));
+    for (const o of [-r.w / 2 + 0.3, r.w / 2 - 0.3, 0])
+      segBox(g, t0 - ov, t1, o === 0 ? 0.9 : 0.6, 1.05, 9.75, MAT.barrier, o);
   }
-  for (let s = 10; s < L; s += 32) {
-    const [x, z] = posAt(r, s, 0);
+  for (let s = 10; s < r.L; s += 32) {
+    const [x, z, g] = posAt(r, s, 0);
     if (!inView(x, z, 120)) continue;
     if (onGroundRoad(x, z, 3)) continue;
-    if (r === RD.dnt && z > I635Z - 16) continue;
+    if (r === RD.dnt && distRoad(RD.i635, x, z) < RD.i635.w / 2 + 4) continue;
     box(2.4, 8, 2.4, MAT.barrier, x, 4, z);
-    if (ax === 'z') box(r.w - 4, 1.1, 2.8, MAT.barrier, x, 7.45, z);
-    else box(2.8, 1.1, r.w - 4, MAT.barrier, x, 7.45, z);
+    const cap = box(r.w - 4, 1.1, 2.8, MAT.barrier, x, 7.45, z);
+    cap.rotation.y = Math.atan2(g.d[0], g.d[1]);
     solids.push({ x1: x - 1.2, x2: x + 1.2, z1: z - 1.2, z2: z + 1.2 });
   }
 }

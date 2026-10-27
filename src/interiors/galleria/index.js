@@ -440,7 +440,7 @@ function buildGalleria() {
     npcs,
     floorAt,
     name: 'Galleria',
-    exitText: 'Exit to the Alpha Rd lot',
+    exitText: 'Exit to Noel Rd',
     label: ['Galleria', 'Level 1', 'Galleria Dallas'],
     labelAt(p) {
       if (p.z < BZ) return bnLabelAt(p);

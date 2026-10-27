@@ -1,7 +1,7 @@
 // Minimap (outdoor map and indoor floor plans).
 import { state } from '../core/state.js';
 import { $ } from '../core/util.js';
-import { DNTX, DOORS, I635Z, LBJZ, MALL, PKE, PKW } from '../world/layout.js';
+import { DOORS, INTS, MALL, PLACES, ROADS } from '../world/layout.js';
 import { MAPDRAW, posAt } from '../core/helpers.js';
 import { MAPMAX, MAPMIN } from '../world/sky.js';
 import { P } from '../player/avatar.js';
@@ -70,47 +70,40 @@ MAP.height = MH;
     }
   g.strokeStyle = '#f2b33d';
   g.lineWidth = 3;
-  for (const b of MALL.slice(0, 3)) g.strokeRect(X(b[0]), Z(b[2]), (b[1] - b[0]) * MS, (b[3] - b[2]) * MS);
+  for (const b of MALL) g.strokeRect(X(b[0]), Z(b[2]), (b[1] - b[0]) * MS, (b[3] - b[2]) * MS);
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.fillStyle = '#f6efe0';
-  g.font = '800 26px Overpass, Arial, sans-serif';
-  g.fillText('GALLERIA', X(-117.5), Z(205));
-  g.font = '700 14px Overpass, Arial, sans-serif';
-  g.fillStyle = '#e9e2cf';
-  for (const [t, x, z] of [
-    ['TARGET', 280, 322],
-    ['THE CROSSINGS', 225, 412],
-    ['LE MÉRIDIEN', 31, 121],
-    ['VERONA', 52, 206],
-    ["McDONALD'S", 354, 401],
-  ])
-    g.fillText(t, X(x), Z(z));
-  g.font = '800 14px Overpass, Arial, sans-serif';
-  g.fillStyle = '#1c2a22';
-  const vt = (t, x, z) => {
-    g.save();
-    g.translate(X(x), Z(z));
-    g.rotate(-Math.PI / 2);
-    g.fillText(t, 0, 1);
-    g.restore();
-  };
-  for (const x of [-100, 70, 200, 360]) g.fillText('ALPHA RD', X(x), Z(0) + 1);
-  for (const x of [90, 300]) g.fillText('PETERSON LN', X(x), Z(155) + 1);
-  for (const x of [70, 320]) g.fillText('JAMES TEMPLE DR', X(x), Z(255) + 1);
-  g.fillText('BRYCE LN', X(62), Z(346.5) + 1);
-  for (const x of [-80, 70, 250]) g.fillText('LBJ FWY', X(x), Z(LBJZ) + 1);
-  for (const z of [-70, 100, 300]) vt('NOEL RD', 0, z);
-  for (const z of [220, 370]) vt('MONTFORT DR', 394, z);
-  vt('MONTFORT DR', 272.5, -70);
-  vt('CORNELL DR', 124, 400);
-  for (const z of [-60, 150, 350]) {
-    vt('DALLAS PKWY', PKE, z);
-    vt('DALLAS PKWY', PKW, z + 50);
+  const inMap = (x, z) => x > MAPMIN.x + 20 && x < MAPMAX.x - 20 && z > MAPMIN.z + 20 && z < MAPMAX.z - 20;
+  // place names
+  for (const p of PLACES) {
+    if (!p.map) continue;
+    const big = p.map === 'GALLERIA';
+    g.font = big ? '800 24px Overpass, Arial, sans-serif' : '700 13px Overpass, Arial, sans-serif';
+    g.fillStyle = big ? '#f6efe0' : '#e9e2cf';
+    g.fillText(p.map, X((p.r[0] + p.r[1]) / 2), Z((p.r[2] + p.r[3]) / 2));
   }
-  g.fillStyle = '#f4f7f2';
-  for (const z of [-20, 260]) vt('TOLLWAY', DNTX, z);
-  g.fillText('I-635', X(60), Z(I635Z) + 1);
+  // street names, written along each street every ~130 m and kept upright
+  g.font = '800 13px Overpass, Arial, sans-serif';
+  for (const r of ROADS) {
+    const txt = r.name.toUpperCase().replace('I-635 ', '');
+    let last = -1e9;
+    for (let s = 40; s < r.L - 20; s += 10) {
+      const [x, z, sg] = posAt(r, s, 0);
+      if (!inMap(x, z) || s - last < 130) continue;
+      // skip spots where another road crosses, so labels don't sit in intersections
+      if (INTS.some((I) => Math.hypot(I.x - x, I.z - z) < 30)) continue;
+      last = s;
+      let a = Math.atan2(sg.d[1], sg.d[0]);
+      if (a > Math.PI / 2) a -= Math.PI;
+      if (a < -Math.PI / 2) a += Math.PI;
+      g.save();
+      g.translate(X(x), Z(z));
+      g.rotate(a);
+      g.fillStyle = r.elevated ? '#f4f7f2' : '#1c2a22';
+      g.fillText(r.elevated ? (r.id === 'dnt' ? 'TOLLWAY' : 'I-635') : txt, 0, 1);
+      g.restore();
+    }
+  }
 }
 const mm = $('#minimap'),
   mg = mm.getContext('2d'),

@@ -1,14 +1,21 @@
 // Player state and model, skateboard, ice skates and the double-jump puff.
 import * as THREE from 'three';
 import { state } from '../core/state.js';
-import { DOORS, MALLF } from '../world/layout.js';
+import { DOORS } from '../world/layout.js';
 import { scene } from '../core/renderer.js';
 import { V3, lam } from '../core/helpers.js';
 import { human } from '../life/people.js';
 import { late } from '../core/state.js';
 
 /* ---------- player ---------- */
-const P = { pos: new V3(DOORS[0].x, 0, MALLF - 11), vel: new V3(), vy: 0, rot: 0, ground: true };
+// start on the Noel Rd sidewalk, facing Macy's entrance into the Galleria
+const P = {
+  pos: new V3(DOORS[0].x + 2, 0, DOORS[0].z + 13),
+  vel: new V3(),
+  vy: 0,
+  rot: Math.atan2(-0.8, -0.6),
+  ground: true,
+};
 const ph = human({ skin: '#c68b62', shirt: '#1f4e79', pants: '#2a2e38', shoe: '#efefec', hair: '#22180f' });
 scene.add(ph.g);
 // skateboard (hold Shift)

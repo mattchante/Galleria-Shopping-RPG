@@ -1,7 +1,7 @@
 // Parking lots with striping and parked cars.
-import { LOTS, MALLF } from './layout.js';
+import { LOTS } from './layout.js';
 import { decal, lam, speckle } from '../core/helpers.js';
-import { MAT, flat, mapRect } from '../core/materials.js';
+import { flat, mapRect } from '../core/materials.js';
 import { textTex } from './signals.js';
 
 /* ---------- parking lots ---------- */
@@ -53,6 +53,5 @@ function lot(L) {
     }
 }
 LOTS.forEach(lot);
-flat(LOTS[0].x1, LOTS[0].x2, LOTS[0].z2, MALLF, 0.045, MAT.sidewalk, 2);
 
 export { parked };

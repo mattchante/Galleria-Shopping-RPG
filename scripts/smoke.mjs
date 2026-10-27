@@ -6,12 +6,15 @@ import { preview } from 'vite';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 
+// Outdoor coordinates follow world/layout.js (real street geometry at half scale; Noel Rd x=0, Alpha Rd z=0).
 // room: null = outdoors, or a door id ('galleria', 'target'). Barnes & Noble and Sephora are part of the Galleria.
 const SHOTS = [
-  { name: 'north-lot', room: null, x: -117.5, z: 54, yaw: Math.PI, pitch: 0.2, dist: 9 },
-  { name: 'alpha-noel', room: null, x: 10, z: 14, yaw: -2.4, pitch: 0.2, dist: 10 },
-  { name: 'target-storefront', room: null, x: 185, z: 318, yaw: -1.9, pitch: 0.25, dist: 16 },
-  { name: 'mcdonalds', room: null, x: 328, z: 418, yaw: -1.9, pitch: 0.3, dist: 20 },
+  { name: 'macys-entrance', room: null, x: -4, z: 139, yaw: Math.PI / 2, pitch: 0.2, dist: 22 },
+  { name: 'nordstrom-garage', room: null, x: 4, z: -11, yaw: 2.4, pitch: 0.12, dist: 14 },
+  { name: 'tollway-alpha', room: null, x: -150, z: 8, yaw: 2.6, pitch: 0.15, dist: 14 },
+  { name: 'montfort-curve', room: null, x: 245, z: 40, yaw: -2.4, pitch: 0.2, dist: 14 },
+  { name: 'target-storefront', room: null, x: 176, z: 263, yaw: -1.9, pitch: 0.2, dist: 14 },
+  { name: 'mcdonalds', room: null, x: 303, z: 346, yaw: 0.8, pitch: 0.25, dist: 18 },
   { name: 'galleria-level-1', room: 'galleria', x: 0, z: 8, yaw: 0, pitch: 0.25, dist: 9 },
   {
     name: 'apple-store',
@@ -94,7 +97,7 @@ try {
   const drive = await page.evaluate(() => {
     const g = window.__g;
     g.outside();
-    g.teleport({ x: -100, z: 40, yaw: Math.PI / 2 });
+    g.teleport({ x: 20, z: 125, yaw: -Math.PI / 2 }); // on Peterson Ln, facing east
     g.toggleDrive();
     g.keys.KeyW = true;
     g.simDrive(3);
@@ -107,6 +110,21 @@ try {
     'SUV drives',
     drive.mph > 20 && drive.out,
     `${drive.mph.toFixed(0)} mph after 3 s, exited=${drive.out}`,
+  );
+  // Macy's entrance on Noel Rd is the way into the Galleria
+  const door = await page.evaluate(() => {
+    const g = window.__g,
+      d = g.DOORS.find((d) => d.id === 'galleria');
+    g.outside();
+    g.teleport({ x: d.x + 0.5, z: d.z, yaw: Math.PI / 2 });
+    return d.label;
+  });
+  await frames(4);
+  const doorInfo = await page.evaluate(() => window.__g.info());
+  check(
+    "Macy's door",
+    door === 'Enter Galleria' && doorInfo.place === 'Galleria Dallas',
+    `${doorInfo.place} · ${doorInfo.sub}`,
   );
   // Sprint indoors
   const sprint = await page.evaluate(() => {
