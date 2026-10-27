@@ -31,6 +31,10 @@ export function buildAppleStore(ctx) {
     B(AP.x2 - AP.x1 + 0.4, AP.h, 0.3, wallW, (AP.x1 + AP.x2) / 2, AP.h / 2, AP.z1 - 0.15, true);
     B(AP.x2 - AP.x1 + 0.4, AP.h, 0.3, wallW, (AP.x1 + AP.x2) / 2, AP.h / 2, AP.z2 + 0.15, true);
     B(0.3, AP.h, AP.z2 - AP.z1, wallW, AP.x1 - 0.15, AP.h / 2, (AP.z1 + AP.z2) / 2, true);
+    // shell walls are solid (the room clamp only covers the doorway band)
+    S_(AP.x1 - 0.3, AP.x2, AP.z1 - 0.3, AP.z1, 0, AP.h);
+    S_(AP.x1 - 0.3, AP.x2, AP.z2, AP.z2 + 0.3, 0, AP.h);
+    S_(AP.x1 - 0.3, AP.x1, AP.z1, AP.z2, 0, AP.h);
     const ceil = B(
       AP.x2 - AP.x1,
       0.1,

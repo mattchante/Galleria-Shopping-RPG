@@ -5,7 +5,6 @@ import { animate } from '../life/people.js';
 import { skatePose } from '../player/avatar.js';
 import { buildTarget } from './target.js';
 import { buildGalleria } from './galleria/index.js';
-import { buildBookstore } from './bookstore.js';
 
 function stepRoomNPCs(dt) {
   for (const n of state.curRoom.npcs) {
@@ -60,7 +59,6 @@ function stepRoomNPCs(dt) {
 const ROOMS = {
   galleria: buildGalleria(),
   target: buildTarget(),
-  bookstore: buildBookstore(),
 };
 state.curRoom = ROOMS.galleria;
 state.curDoor = DOORS[0];

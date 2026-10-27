@@ -243,18 +243,7 @@ export function buildIceRink(ctx) {
       S_(s * BI - 0.35, s * BI + 0.35, z - 0.35, z + 0.35, 0, L2);
     }
   for (const s of [-1, 1])
-    for (const z of [-60, -46, -30, -14, 0]) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.7, 16), dark);
-      p.position.set(s * 9.3, 0.35, z);
-      sc.add(p);
-      const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 1), lam(0x4f7a3a));
-      f.position.set(s * 9.3, 1.2, z);
-      f.scale.y = 1.3;
-      sc.add(f);
-      S_(s * 9.3 - 0.65, s * 9.3 + 0.65, z - 0.65, z + 0.65, 0, 2);
-    }
-  for (const s of [-1, 1])
-    for (const z of [-52, -22, -7]) {
+    for (const z of [-11, 9]) {
       B(0.6, 0.45, 2, wood, s * 9.3, 0.42, z);
       B(0.5, 0.4, 0.08, dark, s * 9.3, 0.2, z - 0.8);
       B(0.5, 0.4, 0.08, dark, s * 9.3, 0.2, z + 0.8);
@@ -278,6 +267,8 @@ export function buildIceRink(ctx) {
           'LEVEL 1',
           'Barnes & Noble · N',
           'Apple · W',
+          'Sephora · W',
+          'CCR Gallery · W',
           'Tech flagship · E',
           'Ice rink · center',
           '',

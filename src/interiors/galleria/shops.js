@@ -73,7 +73,7 @@ export function buildShops(ctx) {
   // ---- level 1: shops, with one double-width tech flagship on the east side facing the rink
   const L1 = {
     1: ['SOLE DISTRICT', 'ATELIER NOIR', null, null, 'BLOOM BEAUTY', 'MERIDIAN WATCH'],
-    '-1': [null, null, 'PARLOR SWEETS', 'OAK & IVORY', 'STUDIO K', 'THE DENIM CO.'],
+    '-1': [null, null, 'PARLOR SWEETS', null, 'STUDIO K', null],
   };
   for (const s of [-1, 1]) {
     const fx = s * W;

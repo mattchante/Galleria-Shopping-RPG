@@ -21,7 +21,6 @@ import './player/avatar.js';
 import './vehicles/suv.js';
 import './interiors/target.js';
 import './interiors/galleria/index.js';
-import './interiors/bookstore.js';
 import './interiors/rooms.js';
 import './ui/minimap.js';
 import './ui/location.js';

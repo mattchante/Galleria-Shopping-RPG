@@ -11,6 +11,9 @@ import { buildShops } from './shops.js';
 import { buildFoodCourt } from './food-court.js';
 import { buildIceRink } from './ice-rink.js';
 import { buildAppleStore } from './apple-store.js';
+import { buildSephora } from './sephora.js';
+import { buildCcrGallery } from './ccr-gallery.js';
+import { buildBookstore, BZ } from './bookstore.js';
 /* ---------- Galleria interior: two levels under a glass barrel vault ---------- */
 
 function buildGalleria() {
@@ -143,11 +146,47 @@ function buildGalleria() {
     if (s > 0) B(0.6, L2, 82, stone, s * (W + 0.3), L2 / 2, -28, true);
     else {
       B(0.6, L2, 2.6, stone, -(W + 0.3), L2 / 2, -67.7, true);
-      B(0.6, L2, 54.6, stone, -(W + 0.3), L2 / 2, -14.3, true);
+      B(0.6, L2, 12, stone, -(W + 0.3), L2 / 2, -35.6, true);
+      B(0.6, L2, 12.8, stone, -(W + 0.3), L2 / 2, -12, true);
+      B(0.6, L2, 7.4, stone, -(W + 0.3), L2 / 2, 9.3, true);
     }
     B(4, 0.3, 76, stone, s * 10, 11.15, -30);
   }
-  B(37.2, M.h, 0.6, stone, 0, M.h / 2, -68.3, true);
+  {
+    // north wall with a walk-in doorway on level 1 and two level-2 openings (one off each upper walkway)
+    const NZ = -68.3,
+      piece = (x1, x2, y0, y1) => {
+        B(x2 - x1, y1 - y0, 0.6, stone, (x1 + x2) / 2, (y0 + y1) / 2, NZ, true);
+        S_(x1, x2, NZ - 0.3, NZ + 0.3, y0 - 0.05, y1);
+      };
+    piece(-22.3, -1.45, 0, L2 - 0.5);
+    piece(1.45, 22.3, 0, L2 - 0.5);
+    piece(-1.45, 1.45, 3.3, L2 - 0.5);
+    piece(-22.3, 22.3, L2 - 0.5, L2);
+    piece(-22.3, -W, L2, 10.5);
+    piece(-BI, BI, L2, 10.5);
+    piece(W, 22.3, L2, 10.5);
+    for (const s of [-1, 1]) piece(s > 0 ? BI : -W, s > 0 ? W : -BI, L2 + 3, 10.5);
+    piece(-22.3, 22.3, 10.5, M.h);
+    const lt = textTex(512, 96, (g, w, h) => {
+      g.fillStyle = '#24382c';
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = '#f1ead8';
+      g.font = '600 42px "Cormorant Garamond", Georgia, serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      try {
+        g.letterSpacing = '6px';
+      } catch (e) {}
+      g.fillText('BARNES & NOBLE · L2', w / 2, h / 2 + 2);
+    });
+    for (const s of [-1, 1]) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.68), new THREE.MeshBasicMaterial({ map: lt }));
+      m.position.set(s * 10, L2 + 3.5, NZ + 0.31);
+      sc.add(m);
+      for (const x of [s * BI, s * W]) B(0.14, 3, 0.2, lam(0x24382c), x, L2 + 1.5, NZ + 0.32);
+    }
+  }
   {
     const bnT = tex(
       512,
@@ -214,7 +253,6 @@ function buildGalleria() {
       shininess: 90,
     });
     B(2.8, 0.4, 0.3, lam(0x24382c), 0, 3.25, -67.85);
-    for (const x of [-0.7, 0.7]) B(1.35, 3, 0.06, dg, x, 1.5, -67.92);
     for (const x of [-1.45, 1.45]) B(0.12, 3.2, 0.2, lam(0x24382c), x, 1.6, -67.85);
     B(16.4, 0.5, 0.4, lam(0x24382c), 0, 4.45, -67.8);
     const at = textTex(1024, 128, (g, w, h) => {
@@ -256,8 +294,6 @@ function buildGalleria() {
     B(0.05, 0.8, 0.05, dark, 2.3, 0.4, -66.4);
     S_(2.1, 2.5, -66.6, -66.2, 0, 1.6);
   }
-  const SUBDOORS = [{ x: 0, z: -66.5, label: 'Enter Barnes & Noble', to: 'bookstore' }];
-  const bnMark = marker(sc, 0, -66.5);
   B(37.2, M.h, 0.6, stone, 0, M.h / 2, 12.3, true);
   {
     const dg = new THREE.MeshPhongMaterial({
@@ -357,6 +393,11 @@ function buildGalleria() {
   }
   buildAppleStore(ctx);
   const { AP, PRODUCTS } = ctx;
+  buildSephora(ctx);
+  buildCcrGallery(ctx);
+  ctx.blk = blk;
+  buildBookstore(ctx);
+  const { SE, sephoraArea, GA, ccrArea, ccrMobile, bnFloorsAt, bnLabelAt, BN } = ctx;
   for (let i = 0; i < 3; i++) {
     const h = mkH();
     sc.add(h.g);
@@ -382,6 +423,7 @@ function buildGalleria() {
       if (x >= r.x1 - 0.05 && x <= r.x2 + 0.05 && z >= r.zt - 0.05 && z <= r.zb)
         c.push(L2 * clamp((r.zb - z) / (r.zb - r.zt), 0, 1));
     if (x > RINK[0] && x < RINK[1] && z > RINK[2] && z < RINK[3]) c.push(0.12);
+    if (z < -67.6) c.push(...bnFloorsAt(x, z));
     for (const v of c) if (v <= y + 0.6 && v > best) best = v;
     return best;
   };
@@ -395,14 +437,21 @@ function buildGalleria() {
     solids: sol,
     camMax: 7,
     mark: mk,
-    marks: [bnMark],
-    subDoors: SUBDOORS,
     npcs,
     floorAt,
     name: 'Galleria',
     exitText: 'Exit to the Alpha Rd lot',
     label: ['Galleria', 'Level 1', 'Galleria Dallas'],
     labelAt(p) {
+      if (p.z < BZ) return bnLabelAt(p);
+      if (p.y < 3 && p.x < -W && p.z > SE.z1 && p.z < SE.z2)
+        return ['Sephora', sephoraArea(p), 'Galleria Dallas'];
+      if (p.y < 3 && p.x < -9 && p.z > SE.z1 && p.z < SE.z2)
+        return ['Galleria · Level 1', 'Sephora entrance', 'Galleria Dallas'];
+      if (p.y < 3 && p.x < -W && p.z > GA.z1 && p.z < GA.z2)
+        return ['CCR Gallery', ccrArea(p), 'Galleria Dallas'];
+      if (p.y < 3 && p.x < -9 && p.z > GA.z1 && p.z < GA.z2)
+        return ['Galleria · Level 1', 'CCR Gallery entrance', 'Galleria Dallas'];
       if (p.y < 3 && p.x < -W) {
         const q = this.productAt(p);
         return ['Apple', q ? q.n + ' table' : 'Store · Level 1', 'Galleria Dallas'];
@@ -411,6 +460,8 @@ function buildGalleria() {
         return ['Galleria · Level 1', 'Apple entrance', 'Galleria Dallas'];
       if (p.y < 3 && Math.abs(p.x) < 6 && p.z < -60)
         return ['Galleria · Level 1', 'Barnes & Noble entrance', 'Galleria Dallas'];
+      if (p.y > 3 && p.z < -64 && Math.abs(p.x) > BI - 0.5)
+        return ['Galleria · Level 2', 'Barnes & Noble level-2 entrance', 'Galleria Dallas'];
       if (p.y > 3)
         return TER.some((r) => inR(p, r))
           ? ['Galleria · Food court', 'Level 2 · terrace seating', 'Galleria Dallas']
@@ -423,10 +474,29 @@ function buildGalleria() {
         return ['Galleria · Level 1', 'Rinkside · gates east & west', 'Galleria Dallas'];
       return ['Galleria · Level 1', 'Shops', 'Galleria Dallas'];
     },
-    camRM: { x1: AP.x1, x2: W, z1: M.z1, z2: M.z2, h: M.h },
+    camRM: { x1: -22, x2: 22, z1: BZ - 34, z2: M.z2, h: M.h },
     clampXZ(p, r) {
-      if (p.y < 3 && p.x < -W + r && p.z > AP.z1 + r && p.z < AP.z2 - r) {
+      if (p.y < 3 && p.x < -W + r && p.z > AP.z1 - 0.5 && p.z < AP.z2 + 0.5) {
         p.x = Math.max(p.x, AP.x1 + r);
+        return;
+      }
+      if (p.y < 3 && p.x < -W + r && p.z > SE.z1 - 0.5 && p.z < SE.z2 + 0.5) {
+        p.x = Math.max(p.x, SE.x1 + r);
+        return;
+      }
+      if (p.y < 3 && p.x < -W + r && p.z > GA.z1 - 0.5 && p.z < GA.z2 + 0.5) {
+        p.x = Math.max(p.x, GA.x1 + r);
+        p.z = clamp(p.z, M.z1 + r, M.z2 - r);
+        return;
+      }
+      // Barnes & Noble: through the level-1 doorway, the level-2 openings, or already inside
+      const atDoor =
+        p.z < M.z1 + r + 0.02 &&
+        ((p.y < 1 && Math.abs(p.x) < 1.45 - r) ||
+          (p.y > 4.5 && Math.abs(p.x) > BI + r && Math.abs(p.x) < W - r));
+      if (p.z < BZ - 0.3 || atDoor) {
+        p.x = clamp(p.x, -22 + r, 22 - r);
+        p.z = Math.max(p.z, BZ - 34 + r);
         return;
       }
       p.x = clamp(p.x, M.x1 + r, M.x2 - r);
@@ -451,6 +521,7 @@ function buildGalleria() {
       );
     },
     update(dt) {
+      if (ccrMobile) ccrMobile.rotation.y += dt * 0.25;
       stepT.offset.y -= dt * 6;
       if (RINKX.vid) RINKX.vid.offset.x += dt * 0.02;
       {
@@ -496,7 +567,8 @@ function buildGalleria() {
     plan(g, S) {
       const k = S / 88,
         X = (x) => S / 2 + x * k,
-        Z = (z) => S / 2 + (z + 28) * k,
+        cz = P.pos.z < -60 ? -80 : -28,
+        Z = (z) => S / 2 + (z - cz) * k,
         up = P.pos.y > 3;
       g.fillStyle = '#231d17';
       g.fillRect(0, 0, S, S);
@@ -511,11 +583,28 @@ function buildGalleria() {
         g.font = '700 18px Overpass, Arial, sans-serif';
         g.textAlign = 'center';
         g.fillText('APPLE', X(-18), Z(-54));
+        g.fillStyle = '#111113';
+        g.fillRect(X(SE.x1), Z(SE.z1), (SE.x2 - SE.x1) * k, (SE.z2 - SE.z1) * k);
+        g.fillStyle = '#ffffff';
+        g.fillText('SEPHORA', X(-18), Z(-23.4));
+        g.fillStyle = '#fbfaf8';
+        g.fillRect(X(GA.x1), Z(GA.z1), (GA.x2 - GA.x1) * k, (GA.z2 - GA.z1) * k);
+        g.fillStyle = '#141414';
+        g.fillText('CCR GALLERY', X(-18), Z(0.6));
         g.fillStyle = '#c9a477';
         for (const q of PRODUCTS) g.fillRect(X(q.x1), Z(q.z1), (q.x2 - q.x1) * k, (q.z2 - q.z1) * k);
       }
-      g.fillStyle = '#8a7a5e';
-      g.fillRect(X(-W), Z(-80), 2 * W * k, 12 * k);
+      g.fillStyle = up ? '#4c6b56' : '#3d5546';
+      g.fillRect(X(-22), Z(BZ - 34), 44 * k, 34 * k);
+      g.fillStyle = up ? 'rgba(201,180,138,.35)' : '#d9b98c';
+      if (up) g.fillRect(X(-6), Z(BZ - 24), 12 * k, 14 * k);
+      else g.fillRect(X(-2.6), Z(BZ - 34), 5.2 * k, 34 * k);
+      g.fillStyle = '#8d9196';
+      g.fillRect(X(BN.ST.x1), Z(BZ + BN.ST.zt), (BN.ST.x2 - BN.ST.x1) * k, (BN.ST.zb - BN.ST.zt) * k);
+      g.fillStyle = '#efe6d2';
+      g.font = '700 16px Overpass, Arial, sans-serif';
+      g.textAlign = 'center';
+      g.fillText(up ? 'B&N · LEVEL 2' : 'BARNES & NOBLE', X(0), Z(BZ - 28));
       if (up) {
         g.fillStyle = '#3a3129';
         g.fillRect(X(-BI), Z(-68), 2 * BI * k, 76 * k);
@@ -553,7 +642,11 @@ function buildGalleria() {
       g.font = '800 24px Overpass, Arial, sans-serif';
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      g.fillText(up ? 'LEVEL 2 · FOOD' : 'LEVEL 1', S / 2, S * 0.08 + 10);
+      g.fillText(
+        P.pos.z < BZ ? (up ? 'B&N · LEVEL 2' : 'B&N · LEVEL 1') : up ? 'LEVEL 2 · FOOD' : 'LEVEL 1',
+        S / 2,
+        S * 0.08 + 10,
+      );
       g.save();
       g.translate(X(P.pos.x), Z(P.pos.z));
       g.rotate(Math.atan2(Math.cos(P.rot), Math.sin(P.rot)));

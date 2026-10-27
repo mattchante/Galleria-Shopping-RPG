@@ -42,7 +42,7 @@ Phones get an on-screen stick and buttons.
 
 - Half-scale street grid with signal-timed traffic, pedestrians, the elevated Tollway and I-635
 - Target (enterable) and a McDonald's at Montfort & LBJ
-- Two-level Galleria interior: shops, a walk-in Apple store with product tables that link to apple.com, Barnes & Noble with a seated café, a skateable ice rink with a Christmas tree, and a food court with open kitchens and moving escalators
+- Two-level Galleria interior: shops, a walk-in Apple store with product tables that link to apple.com, a walk-in Sephora, CCR Gallery (framed photographs, canvases and sculpture), a two-floor Barnes & Noble (café, staircase, level-2 windows, entrances from both mall levels), a skateable ice rink with a Christmas tree, and a food court with open kitchens and moving escalators
 
 ## Project layout
 
@@ -57,8 +57,8 @@ src/
   life/                 traffic, people
   player/               avatar, input, physics
   vehicles/suv.js       the drivable SUV
-  interiors/            rooms registry, doors, Target, Barnes & Noble,
-    galleria/           the mall: index (shell), escalators, shops, food court, ice rink, Apple store
+  interiors/            rooms registry, doors, Target,
+    galleria/           the mall: index (shell), escalators, shops, food court, ice rink, Apple, Sephora, CCR Gallery, Barnes & Noble
   view/camera.js        follow camera
   ui/                   HUD, minimap, location readout
 scripts/smoke.mjs       headless smoke test

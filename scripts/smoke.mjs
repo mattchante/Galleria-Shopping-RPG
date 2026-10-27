@@ -6,7 +6,7 @@ import { preview } from 'vite';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 
-// room: null = outdoors, a door id ('galleria', 'target') or a room id ('bookstore')
+// room: null = outdoors, or a door id ('galleria', 'target'). Barnes & Noble and Sephora are part of the Galleria.
 const SHOTS = [
   { name: 'north-lot', room: null, x: -117.5, z: 54, yaw: Math.PI, pitch: 0.2, dist: 9 },
   { name: 'alpha-noel', room: null, x: 10, z: 14, yaw: -2.4, pitch: 0.2, dist: 10 },
@@ -25,7 +25,11 @@ const SHOTS = [
   },
   { name: 'food-court', room: 'galleria', x: 0, z: -12, y: 5.5, yaw: 0, pitch: 0.45, dist: 9 },
   { name: 'ice-rink', room: 'galleria', x: 3.5, z: -30, y: 0.12, yaw: -0.4, pitch: 0.3, dist: 6 },
-  { name: 'barnes-noble', room: 'bookstore', x: 4, z: -15, yaw: -0.9, pitch: 0.3, dist: 7 },
+  { name: 'sephora', room: 'galleria', x: -14.2, z: -24, yaw: Math.PI / 2, pitch: 0.28, dist: 5 },
+  { name: 'ccr-gallery', room: 'galleria', x: -15.6, z: 1.4, yaw: 1.35, pitch: 0.12, dist: 4.5 },
+  { name: 'barnes-noble', room: 'galleria', x: 4, z: -83.3, yaw: -0.9, pitch: 0.3, dist: 7 },
+  { name: 'bn-stairs', room: 'galleria', x: 17, z: -76, yaw: -2.2, pitch: 0.3, dist: 9 },
+  { name: 'bn-level-2', room: 'galleria', x: -10, z: -92, y: 5.5, yaw: -0.8, pitch: 0.18, dist: 7 },
   { name: 'target-interior', room: 'target', x: -5, z: 6, yaw: 0.6, pitch: 0.3, dist: 6 },
 ];
 
@@ -75,7 +79,6 @@ try {
     await page.evaluate((s) => {
       const g = window.__g;
       if (!s.room) g.outside();
-      else if (s.room === 'bookstore') g.room('bookstore');
       else g.enter(s.room);
       g.teleport({ x: s.x, z: s.z, y: s.y ?? 0, yaw: s.yaw });
       g.setCam(s.yaw, s.pitch, s.dist);
@@ -124,6 +127,53 @@ try {
     return g.P.pos.y;
   });
   check('escalator rides up', esc > 2, `height ${esc.toFixed(2)} m after 4 s`);
+  // Barnes & Noble: walk in from the concourse, climb the stair, walk out onto the upper walkway
+  const bn = await page.evaluate(() => {
+    const g = window.__g,
+      r = {};
+    g.teleport({ x: 0, z: -64, yaw: 0 });
+    g.keys.KeyW = true;
+    g.sim(2.5);
+    r.in1 = g.P.pos.z;
+    g.teleport({ x: 20.6, z: -73.6, yaw: 0 });
+    g.sim(4);
+    r.stairY = g.P.pos.y;
+    g.teleport({ x: 10, z: -66, y: 5.5, yaw: 0 });
+    g.sim(2);
+    r.in2 = [g.P.pos.z, g.P.pos.y];
+    g.keys.KeyW = false;
+    return r;
+  });
+  check('B&N level-1 walk-in', bn.in1 < -69, `z ${bn.in1.toFixed(1)}`);
+  check('B&N stair climbs', bn.stairY > 5, `height ${bn.stairY.toFixed(2)} m after 4 s`);
+  check(
+    'B&N level-2 entrance',
+    bn.in2[0] < -69 && bn.in2[1] > 5,
+    `z ${bn.in2[0].toFixed(1)}, y ${bn.in2[1].toFixed(2)}`,
+  );
+  // Sephora: walk straight in from the concourse (the HUD label updates on the next rendered frames)
+  const seX = await page.evaluate(() => {
+    const g = window.__g;
+    g.teleport({ x: -9, z: -24, yaw: Math.PI / 2 });
+    g.keys.KeyW = true;
+    g.sim(2);
+    g.keys.KeyW = false;
+    return g.P.pos.x;
+  });
+  await frames(4);
+  const sePlace = await page.evaluate(() => window.__g.info().place);
+  check('Sephora walk-in', seX < -13 && sePlace === 'Sephora', `x ${seX.toFixed(1)} · ${sePlace}`);
+  const gaX = await page.evaluate(() => {
+    const g = window.__g;
+    g.teleport({ x: -9, z: 0.5, yaw: Math.PI / 2 });
+    g.keys.KeyW = true;
+    g.sim(2);
+    g.keys.KeyW = false;
+    return g.P.pos.x;
+  });
+  await frames(4);
+  const gaPlace = await page.evaluate(() => window.__g.info().place);
+  check('CCR Gallery walk-in', gaX < -13 && gaPlace === 'CCR Gallery', `x ${gaX.toFixed(1)} · ${gaPlace}`);
   await frames(2);
 } catch (e) {
   errors.push(String(e));
