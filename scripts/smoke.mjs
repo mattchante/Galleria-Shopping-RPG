@@ -13,8 +13,9 @@ const SHOTS = [
   { name: 'nordstrom-garage', room: null, x: 4, z: -11, yaw: 2.4, pitch: 0.12, dist: 14 },
   { name: 'tollway-alpha', room: null, x: -150, z: 8, yaw: 2.6, pitch: 0.15, dist: 14 },
   { name: 'montfort-curve', room: null, x: 245, z: 40, yaw: -2.4, pitch: 0.2, dist: 14 },
-  { name: 'target-storefront', room: null, x: 176, z: 263, yaw: -1.9, pitch: 0.2, dist: 14 },
-  { name: 'mcdonalds', room: null, x: 303, z: 346, yaw: 0.8, pitch: 0.25, dist: 18 },
+  { name: 'target-plaza-drive', room: null, x: 303, z: 258.5, yaw: Math.PI / 2, pitch: 0.1, dist: 8 },
+  { name: 'target-storefront', room: null, x: 241, z: 281.5, yaw: Math.PI / 2, pitch: 0.18, dist: 12 },
+  { name: 'mcdonalds', room: null, x: 292, z: 302, yaw: 3.6, pitch: 0.14, dist: 13 },
   { name: 'galleria-level-1', room: 'galleria', x: 0, z: 8, yaw: 0, pitch: 0.25, dist: 9 },
   {
     name: 'apple-store',

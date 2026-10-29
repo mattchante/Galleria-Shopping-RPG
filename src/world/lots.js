@@ -18,6 +18,7 @@ function lot(L) {
     z += 11 + 6.5;
   }
   const inWalk = (x) => L.walk && x > L.walk[0] - 1.4 && x < L.walk[1] + 1.4;
+  const kept = (x) => L.free && L.free.some(([a, b]) => x > a && x < b); // stalls left empty (cart corrals)
   const t = textTex(W, H, (g, w, h) => {
     g.fillStyle = '#45474a';
     g.fillRect(0, 0, w, h);
@@ -47,7 +48,7 @@ function lot(L) {
   mapRect(L.x1, L.x2, L.z1, L.z2, '#2f3a33');
   for (const rc of rows)
     for (let x = L.x1 + 1.375; x < L.x2 - 1; x += 2.75) {
-      if (inWalk(x)) continue;
+      if (inWalk(x) || kept(x)) continue;
       if (Math.random() < L.occ) parked.push({ x, z: rc - 2.75, rot: 0 });
       if (Math.random() < L.occ) parked.push({ x, z: rc + 2.75, rot: Math.PI });
     }

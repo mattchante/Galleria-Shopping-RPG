@@ -49,6 +49,7 @@ function building(x1, x2, z1, z2, h, type, tint, opts = {}) {
   if (!opts.noMap) mapRect(x1, x2, z1, z2, opts.map || '#56665b');
   return m;
 }
+export { building };
 for (const b of BUILDINGS) building(b[0], b[1], b[2], b[3], b[4], b[5], b[6]);
 // Galleria Dallas
 for (const b of MALL)

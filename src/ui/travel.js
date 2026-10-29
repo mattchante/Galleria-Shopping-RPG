@@ -2,7 +2,7 @@
 // streets, and the screen fades and puts you there. Galleria stores are in the list too.
 import { state, late } from '../core/state.js';
 import { $ } from '../core/util.js';
-import { BOUNDS, DOORS, MCD } from '../world/layout.js';
+import { BOUNDS, DOORS, PLAZA } from '../world/layout.js';
 import { canvas, isTouch, scene } from '../core/renderer.js';
 import { solids } from '../core/helpers.js';
 import { MAPMIN } from '../world/sky.js';
@@ -21,15 +21,15 @@ const SPOTS = [
   { g: 'Streets', n: 'The Westin', s: 'Galleria Rd', p: '3', x: -118, z: 192, rot: Math.PI },
   { g: 'Streets', n: 'Montfort Dr & Alpha Rd', p: '4', x: 230, z: 12, rot: Math.PI / 2 },
   { g: 'Streets', n: 'Residence Inn', s: 'James Temple Dr', p: '5', x: 80, z: 216, rot: 0 },
-  { g: 'Streets', n: 'Target', s: 'Front entrance', p: 'T', x: TD.x - 4, z: TD.z, rot: Math.PI / 2 },
+  { g: 'Streets', n: 'Target', s: 'Front entrance', p: 'T', x: TD.x + 1, z: TD.z + 3, rot: -Math.PI / 2 },
   {
     g: 'Streets',
     n: 'McDonald’s',
-    s: 'Montfort Dr at LBJ',
+    s: 'Target Plaza',
     p: 'M',
-    x: (MCD[0] + MCD[1]) / 2,
-    z: MCD[3] + 7,
-    rot: Math.PI,
+    x: (PLAZA.mcd[0] + PLAZA.mcd[1]) / 2,
+    z: (PLAZA.mcdDrive[0] + PLAZA.mcdDrive[1]) / 2,
+    rot: 0,
   },
   { g: 'Streets', n: 'LBJ Fwy & Noel Rd', p: '6', x: -12, z: 349, rot: 0 },
   { g: 'Inside the Galleria', room: 'galleria', n: 'Ice rink', x: 0, z: -22, rot: Math.PI },

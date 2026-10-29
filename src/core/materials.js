@@ -81,6 +81,15 @@ T.store = tex(128, 128, (g, w, h) => {
   g.fillStyle = '#b8b2a6';
   g.fillRect(0, 62, w, 6);
 });
+// plain stucco/EIFS wall with faint panel joints (big-box stores, fast food; windows are added per store)
+T.blank = tex(128, 128, (g, w, h) => {
+  g.fillStyle = '#efeeea';
+  g.fillRect(0, 0, w, h);
+  speckle(g, w, h, 900, 0.06, '0,0,0');
+  g.fillStyle = 'rgba(0,0,0,.08)';
+  g.fillRect(0, 0, w, 1);
+  g.fillRect(0, 0, 1, h);
+});
 const TEXCFG = {
   glass: { t: T.glass, bw: 3, fh: 4, phong: true },
   apt: { t: T.apt, bw: 3.6, fh: 3.3 },
@@ -88,6 +97,7 @@ const TEXCFG = {
   stone: { t: T.stone, bw: 9, fh: 5 },
   garage: { t: T.garage, bw: 9, fh: 3.2 },
   store: { t: T.store, bw: 7, fh: 0 },
+  blank: { t: T.blank, bw: 6, fh: 6 },
 };
 const matCache = {};
 function bmat(type, tint) {

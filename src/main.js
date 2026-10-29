@@ -12,7 +12,7 @@ import './world/streets.js';
 import './world/signals.js';
 import './world/buildings.js';
 import './world/lots.js';
-import './world/storefronts.js';
+import './world/target-plaza.js';
 import './world/mall-exterior.js';
 import './life/traffic.js';
 import './world/trees.js';

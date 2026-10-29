@@ -1,6 +1,6 @@
 // Street trees and street lights.
 import * as THREE from 'three';
-import { BOUNDS, DOORS, LOTS, MCDPAD, RD, SW, TGT, TLOT, distRoad } from './layout.js';
+import { BOUNDS, DOORS, LOTS, PLAZA, RD, SW, distRoad } from './layout.js';
 import { scene } from '../core/renderer.js';
 import { MAPDRAW, V3, lam, pick, posAt, rand, solids } from '../core/helpers.js';
 import { MAT } from '../core/materials.js';
@@ -12,8 +12,8 @@ function isFree(x, z, r) {
   if (x < BOUNDS.x1 || x > BOUNDS.x2 || z < BOUNDS.z1 || z > BOUNDS.z2 - 4) return false;
   if (distRoad(RD.dnt, x, z) < RD.dnt.w / 2 + 3) return false;
   for (const d of DOORS) if (Math.hypot(x - d.x, z - d.z) < 12) return false;
-  if (x > MCDPAD[0] - 2 && x < MCDPAD[1] + 2 && z > MCDPAD[2] - 2 && z < MCDPAD[3] + 2) return false;
-  if (x > TLOT.x2 - 1 && x < TGT[0] && z > TGT[2] && z < TGT[3]) return false;
+  // Target Plaza is paved from Target's front to Montfort's sidewalk
+  if (x > PLAZA.x1 - 1 && x < PLAZA.x2 + 1.5 && z > PLAZA.z1 - 1 && z < PLAZA.z2 + 1) return false;
   if (onGroundRoad(x, z, SW + 0.5)) return false;
   for (const L of LOTS) if (x > L.x1 - 1 && x < L.x2 + 1 && z > L.z1 && z < L.z2 + 1) return false;
   for (const s of solids)

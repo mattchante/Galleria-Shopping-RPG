@@ -585,9 +585,36 @@ const fit = (b, m = 2) => {
 // [real x1, x2, z1, z2, height, facade, tint]
 const MCY = fit([-92, -17, 238, 356]); // Macy's, entrance on Noel Rd
 const NGAR = fit([-81, -46, 13, 196]); // Nordstrom parking garage at Noel & Alpha
-const TGT = fit([384, 471, 425, 579]); // Target
-const MCD = fit([560, 604, 626, 650]); // McDonald's at Montfort & LBJ
-const MCDPAD = box4([546, 612, 612, 690]); // its lot and drive-thru loop
+/* Target Plaza: Montfort Dr, James Temple Dr and the LBJ frontage road. Target faces east across its
+   lot toward Montfort; the main drive comes in from Montfort straight at the store, a second drive
+   runs in beside McDonald's, and a fire lane runs along Target's front from James Temple to LBJ.
+   Footprints are from OpenStreetMap and the aerial; the drives and lots are laid out in game units
+   so they fit between Target and Montfort's sidewalk at half scale. */
+const TGT = [...G([384, 0]).slice(0, 1), G([471, 0])[0], 219.5, G([0, 625])[1]]; // Target (incl. its south bay)
+const PLAZA = {
+  x1: TGT[1],
+  x2: 301.5, // Montfort's west sidewalk starts just east of here
+  z1: 217.5, // James Temple's south sidewalk ends here
+  z2: 349, // LBJ frontage road's north sidewalk starts here
+  walk: [TGT[1], TGT[1] + 5], // Target's front sidewalk
+  fire: [TGT[1] + 5, TGT[1] + 12], // fire lane in front of the store, James Temple to LBJ
+  main: [254, 263], // main drive from Montfort (z band)
+  mcdDrive: [304, 312], // drive in from Montfort beside McDonald's (z band)
+  aisle: [271, 278], // north-south aisle joining the two drives (x band)
+  thru: [278.6, 283.2], // McDonald's drive-thru lane (x band), runs south along its west side
+  door: G([0, 556])[1], // Target's entrance (z)
+  strip: [266, 299.5, 219.5, 233.5], // the strip center at the northeast corner (faces south)
+  mcd: [284.5, 300, 314, 323.5], // McDonald's
+  game: [286, 298, 331, 345], // Game Over Videogames + AT&T, storefronts facing Montfort
+  lots: [
+    [TGT[1] + 12.75, 262, 219.5, 254, 0.45],
+    [264, 300, 234, 254, 0.35],
+    [TGT[1] + 12.75, 271, 263, 304, 0.62, [[254.5, 260.2]]],
+    [278, 300, 263, 304, 0.55],
+    [TGT[1] + 12.75, 276, 312, 349, 0.4],
+  ],
+};
+const MCD = PLAZA.mcd;
 const REAL_BUILDINGS = [
   // north of Alpha Rd, west of Noel
   [-188, -11, -176, -145, 16, 'apt', 0xeadfca],
@@ -690,10 +717,8 @@ const REAL_BUILDINGS = [
   [248, 330, 482, 530, 10, 'glass', 0x58748a],
   [227, 275, 612, 688, 36, 'glass', 0x6f8fa8],
   [300, 361, 632, 685, 22, 'glass', 0x7d9bb0],
-  [391, 463, 579, 629, 7, 'store', 0xebe2d0],
   [380, 428, 653, 681, 6, 'store', 0xe7e1d5],
   [443, 458, 651, 702, 6, 'store', 0xe9dcc4],
-  [538, 609, 419, 460, 7, 'store', 0xe6d6bd],
 ];
 const BUILDINGS = [
   ...REAL_BUILDINGS.map((b) => {
@@ -701,8 +726,6 @@ const BUILDINGS = [
     return c ? [...c, ...b.slice(4)] : null;
   }),
   [...NGAR, 19, 'garage', 0xdcd8cf],
-  [...TGT, 10, 'store', 0xeeebe5],
-  [...MCD, 6, 'store', 0xd6c9b2],
 ].filter(Boolean);
 // Galleria Dallas: the mall blocks (pink granite), Nordstrom at the north end, Macy's on Noel
 const MALL = [
@@ -724,7 +747,6 @@ const MALL = [
 // the barrel-vaulted skylight along the mall's spine (game units)
 const VAULT = { x: G([-131, 0])[0], z1: G([0, 95])[1], z2: G([0, 400])[1] };
 const LOTS = [
-  { b: [336, 376, 480, 582], walk: [355, 361], occ: 0.55, id: 'target' },
   { b: [40, 98, 438, 475], occ: 0.45 },
   { b: [127, 197, 510, 540], occ: 0.4 },
   { b: [28, 88, 640, 678], occ: 0.4 },
@@ -736,10 +758,10 @@ const LOTS = [
     const c = clipRect(box4(L.b), 0.5);
     if (!c) return null;
     const [x1, x2, z1, z2] = c;
-    return Object.assign(L, { x1, x2, z1, z2, walk: L.walk && L.walk.map((x) => G([x, 0])[0]) });
+    return Object.assign(L, { x1, x2, z1, z2 });
   })
-  .filter(Boolean);
-const TLOT = LOTS.find((L) => L.id === 'target');
+  .filter(Boolean)
+  .concat(PLAZA.lots.map(([x1, x2, z1, z2, occ, free]) => ({ x1, x2, z1, z2, occ, free, plaza: true })));
 const [, MACY_DOOR_Z] = G([0, 271]);
 const DOORS = [
   {
@@ -752,11 +774,11 @@ const DOORS = [
   },
   {
     id: 'target',
-    x: TGT[0] - 4.4,
-    z: G([0, 520])[1],
+    x: TGT[1] + 3.6,
+    z: PLAZA.door,
     label: 'Enter Target',
     pin: 'T',
-    exit: { x: TGT[0] - 7.6, z: G([0, 520])[1], rot: -Math.PI / 2 },
+    exit: { x: TGT[1] + 4.6, z: PLAZA.door + 3.2, rot: Math.PI / 2 },
   },
 ];
 // labelled places for the minimap and the location readout, in game units
@@ -769,7 +791,7 @@ const PLACES = [
     top: true,
   },
   {
-    r: [TGT[0] - 9, TGT[0], G([0, 520])[1] - 9, G([0, 520])[1] + 9],
+    r: [TGT[1], TGT[1] + 5.5, PLAZA.door - 9, PLAZA.door + 9],
     n: 'Target',
     s: 'Front entrance · open',
     top: true,
@@ -788,13 +810,25 @@ const PLACES = [
   { r: box4([26, 93, 191, 231]), n: 'Le Méridien Dallas', s: 'Hotel · Noel Rd', map: 'LE MÉRIDIEN' },
   { r: box4([122, 198, 424, 507]), n: 'Residence Inn', s: 'Hotel · James Temple Dr', map: 'RESIDENCE INN' },
   {
-    r: [MCDPAD[0] - 2, MCDPAD[1] + 2, MCDPAD[2] - 2, MCDPAD[3] + 2],
+    r: [PLAZA.thru[0] - 1, PLAZA.x2, PLAZA.mcd[2] - 2, PLAZA.mcd[3] + 4],
     n: 'McDonald’s',
-    s: 'Montfort Dr at LBJ Fwy',
+    s: 'Target Plaza · Montfort Dr',
     map: 'McDONALD’S',
   },
-  { r: [TGT[0] - 9, TGT[1], TGT[2], TGT[3]], n: 'Target', s: 'Montfort Dr at LBJ Fwy', map: 'TARGET' },
-  { r: [TLOT.x1, TLOT.x2, TLOT.z1, TLOT.z2], n: 'Target', s: 'Parking lot', map: '' },
+  {
+    r: [PLAZA.game[0] - 3, PLAZA.x2, PLAZA.game[2] - 3, PLAZA.game[3] + 2],
+    n: 'Game Over Videogames',
+    s: 'Target Plaza · next to AT&T',
+    map: '',
+  },
+  { r: [...PLAZA.strip], n: 'Shops', s: 'Target Plaza · Montfort Dr at James Temple', map: '' },
+  { r: [...TGT], n: 'Target', s: 'Target Plaza · Montfort Dr', map: 'TARGET' },
+  {
+    r: [PLAZA.x1, PLAZA.x2, PLAZA.z1, PLAZA.z2],
+    n: 'Target Plaza',
+    s: 'Parking lot · Montfort Dr',
+    map: '',
+  },
   {
     r: box4([-198, -82, 86, 470]),
     n: 'Galleria Dallas',
@@ -813,15 +847,14 @@ export {
   LOTS,
   MALL,
   MCD,
-  MCDPAD,
   MCY,
   NGAR,
   PLACES,
   RD,
   ROADS,
   SW,
+  PLAZA,
   TGT,
-  TLOT,
   VAULT,
   distRoad,
   sAt,
