@@ -78,7 +78,7 @@ function carCollide() {
   return hit;
 }
 function toggleCar() {
-  if (!state.started || state.busy || state.mode !== 'out') return;
+  if (!state.started || state.busy || state.flying || state.mode !== 'out') return;
   if (V.active) {
     V.active = false;
     const lx = Math.cos(V.h),

@@ -58,6 +58,7 @@ function interact() {
 }
 function goRoom(id, at) {
   state.busy = true;
+  state.flying = false;
   fade.classList.add('on');
   state.skating = false;
   board.visible = false;
@@ -81,6 +82,7 @@ function goRoom(id, at) {
 }
 function go(where) {
   state.busy = true;
+  state.flying = false;
   fade.classList.add('on');
   state.skating = false;
   board.visible = false;

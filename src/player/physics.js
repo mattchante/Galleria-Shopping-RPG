@@ -1,9 +1,56 @@
 // Walking, skating, sprinting, jumping and floor heights.
 import { state } from '../core/state.js';
 import { collide } from '../core/collision.js';
+import { clamp } from '../core/helpers.js';
+import { BOUNDS } from '../world/layout.js';
 import { animate } from '../life/people.js';
 import { P, blades, board, ph, puff, skatePose, stepPuff } from './avatar.js';
 import { cam, keys, skateToggle, stick } from './input.js';
+
+// Dev flying (F): WASD moves along the camera's heading, Space climbs, C or Ctrl descends, Shift is fast.
+// No gravity; outdoors you pass over buildings, indoors walls still stop you.
+function stepFly(dt, fz, sx, fwd, rt) {
+  const fast = keys.ShiftLeft || keys.ShiftRight,
+    spd = fast ? 70 : 26;
+  let mx = fwd.x * fz + rt.x * sx,
+    mz = fwd.z * fz + rt.z * sx;
+  const ml = Math.hypot(mx, mz);
+  if (ml > 1) {
+    mx /= ml;
+    mz /= ml;
+  }
+  const up = (keys.Space ? 1 : 0) - (keys.KeyC || keys.ControlLeft || keys.ControlRight ? 1 : 0);
+  const k = Math.min(1, dt * 6);
+  P.vel.x += (mx * spd - P.vel.x) * k;
+  P.vel.z += (mz * spd - P.vel.z) * k;
+  P.vy += (up * spd * 0.6 - P.vy) * k;
+  P.pos.x += P.vel.x * dt;
+  P.pos.z += P.vel.z * dt;
+  P.pos.y += P.vy * dt;
+  if (ml > 0.05) {
+    let a = Math.atan2(mx, mz) - P.rot;
+    a = Math.atan2(Math.sin(a), Math.cos(a));
+    P.rot += a * Math.min(1, dt * 8);
+  }
+  if (state.mode === 'room') {
+    collide(P.pos, 0.42);
+    const M = state.curRoom.camRM || state.curRoom.RM;
+    P.pos.y = clamp(P.pos.y, 0, M.h - 2);
+  } else {
+    P.pos.x = clamp(P.pos.x, BOUNDS.x1 - 150, BOUNDS.x2 + 150);
+    P.pos.z = clamp(P.pos.z, BOUNDS.z1 - 150, BOUNDS.z2 + 150);
+    P.pos.y = clamp(P.pos.y, 0, 400);
+  }
+  P.ground = false;
+  board.visible = blades.visible = false;
+  ph.g.position.copy(P.pos);
+  ph.g.rotation.y = P.rot;
+  // superhero pose: arms forward, legs trailing
+  animate(ph, 0, dt, false);
+  ph.armL.rotation.x = ph.armR.rotation.x = -2.6;
+  ph.legL.rotation.x = ph.legR.rotation.x = 0.25;
+  ph.torso.rotation.x = 0;
+}
 
 function stepPlayer(dt) {
   let fz = 0,
@@ -18,6 +65,11 @@ function stepPlayer(dt) {
   }
   const fwd = { x: -Math.sin(cam.yaw), z: -Math.cos(cam.yaw) },
     rt = { x: -fwd.z, z: fwd.x };
+  if (state.flying) {
+    state.skating = state.sprinting = state.iceSkating = false;
+    state.jumpQ = false;
+    return stepFly(dt, fz, sx, fwd, rt);
+  }
   let mx = fwd.x * fz + rt.x * sx,
     mz = fwd.z * fz + rt.z * sx;
   const ml = Math.hypot(mx, mz);
@@ -27,7 +79,7 @@ function stepPlayer(dt) {
     boost = keys.ShiftLeft || keys.ShiftRight || skateToggle;
   state.sprinting = state.mode === 'room' && !state.iceSkating && boost && ml > 0.05;
   const top =
-      (state.skating ? 16.4 : state.iceSkating ? (boost ? 9.5 : 6.2) : state.sprinting ? 8.6 : 4.1) *
+      (state.skating ? 19 : state.iceSkating ? (boost ? 9.5 : 6.2) : state.sprinting ? 8.6 : 4.1) *
       Math.min(1, ml),
     cur = Math.hypot(P.vel.x, P.vel.z);
   if (ml > 0.05) {
@@ -35,7 +87,7 @@ function stepPlayer(dt) {
     mz /= ml;
     let a = Math.atan2(mx, mz) - P.rot;
     a = Math.atan2(Math.sin(a), Math.cos(a));
-    P.rot += a * Math.min(1, dt * (state.skating ? 4.5 : state.iceSkating ? 3.5 : 12));
+    P.rot += a * Math.min(1, dt * (state.skating ? 8 : state.iceSkating ? 3.5 : 12));
     if (glide) {
       mx = Math.sin(P.rot);
       mz = Math.cos(P.rot);
@@ -48,9 +100,11 @@ function stepPlayer(dt) {
       (!P.ground
         ? 2.5
         : state.skating
-          ? top > cur
-            ? 1.4
-            : 0.7
+          ? ml > 0.05
+            ? top > cur
+              ? 3.2
+              : 2
+            : 9 // let go of the keys and the board stops: no coasting
           : state.iceSkating
             ? top > cur
               ? 1.1

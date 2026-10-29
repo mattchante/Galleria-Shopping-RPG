@@ -52,15 +52,17 @@ function stepHUD(dt) {
       state.mode === 'out' ? near.label : near.sub ? near.sub.label : state.curRoom.exitText;
   if (hudT > 0.12) {
     hudT = 0;
-    moveModeEl.textContent = V.active
-      ? 'Black SUV'
-      : state.skating
-        ? 'Skateboard'
-        : state.iceSkating
-          ? 'Ice skates'
-          : state.sprinting
-            ? 'Sprinting'
-            : 'On foot';
+    moveModeEl.textContent = state.flying
+      ? 'Flying · dev'
+      : V.active
+        ? 'Black SUV'
+        : state.skating
+          ? 'Skateboard'
+          : state.iceSkating
+            ? 'Ice skates'
+            : state.sprinting
+              ? 'Sprinting'
+              : 'On foot';
     moveSpdEl.textContent = Math.round((V.active ? Math.abs(V.speed) : Math.hypot(P.vel.x, P.vel.z)) * 2.237);
     const [n, s, e] = locate();
     const key = n + s + e;

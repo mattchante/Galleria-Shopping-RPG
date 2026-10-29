@@ -79,6 +79,7 @@ function travel(spot) {
   state.busy = true;
   fade.classList.add('on');
   state.skating = false;
+  state.flying = false;
   board.visible = false;
   setTimeout(() => {
     const driving = V.active && !spot.room;

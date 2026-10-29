@@ -25,6 +25,16 @@ addEventListener('keydown', (e) => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyE' && !e.repeat) late.interact();
   if (e.code === 'KeyM' && !e.repeat) late.toggleTravel();
+  if (e.code === 'KeyF' && !e.repeat && !V.active && !state.busy) {
+    // dev flying: fly around to look at the map; F again to drop back down
+    state.flying = !state.flying;
+    late.P.vy = 0;
+    if (state.flying) {
+      late.P.pos.y += 3;
+      cam.dist = Math.max(cam.dist, 14);
+    } else cam.dist = Math.min(cam.dist, 14);
+  }
+  if (state.flying && ['ControlLeft', 'ControlRight', 'KeyC'].includes(e.code)) e.preventDefault();
 });
 addEventListener('keyup', (e) => {
   keys[e.code] = false;
@@ -59,7 +69,7 @@ canvas.addEventListener(
   (e) => {
     if (!state.started) return;
     e.preventDefault();
-    cam.dist = clamp(cam.dist + e.deltaY * 0.008, 2.6, 14);
+    cam.dist = clamp(cam.dist + e.deltaY * (state.flying ? 0.04 : 0.008), 2.6, state.flying ? 80 : 14);
   },
   { passive: false },
 );
