@@ -130,6 +130,18 @@ try {
     door === 'Enter Galleria' && doorInfo.place === 'Galleria Dallas',
     `${doorInfo.place} · ${doorInfo.sub}`,
   );
+  // Fast travel: open the map (screenshot it), then travel to Target's entrance from the list
+  await page.evaluate(() => {
+    window.__g.outside();
+    window.__g.toggleMap();
+  });
+  await frames(2);
+  await page.screenshot({ path: 'smoke-output/fast-travel-map.png' });
+  await page.evaluate(() => window.__g.fastTravel('Target'));
+  await page.waitForFunction(() => !document.getElementById('fade').classList.contains('on'));
+  await frames(4);
+  const ft = await page.evaluate(() => window.__g.info());
+  check('fast travel', ft.mode === 'out' && ft.place === 'Target', `${ft.place} · ${ft.sub}`);
   // Sprint indoors
   const sprint = await page.evaluate(() => {
     const g = window.__g;

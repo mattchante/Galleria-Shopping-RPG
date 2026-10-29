@@ -22,7 +22,6 @@
         <div id="locSub">North lot · off Alpha Rd</div>
         <div id="moveRow"><span id="moveMode">On foot</span><span id="moveSpd">0</span><span>mph</span></div>
       </div>
-      <div id="clock" class="card gutR gutT"><span id="day">Day 1</span><span id="time">5:40 PM</span></div>
       <div id="mapWrap" class="gutL gutB">
         <canvas id="minimap" width="560" height="560"></canvas><span class="north">N</span>
       </div>
@@ -44,7 +43,7 @@
         <b>WASD</b><span>Walk · drive</span> <b>Shift</b><span>Skateboard · sprint indoors</span> <b>Tab</b
         ><span>Get in / out of the SUV</span> <b>Space</b><span>Jump · tap again to double jump</span>
         <b>Mouse</b><span>Look (click to lock)</span> <b>Wheel</b><span>Camera distance</span> <b>E</b
-        ><span>Enter / exit</span> <b>M</b><span>Bigger map</span>
+        ><span>Enter / exit</span> <b>M</b><span>Map · fast travel</span>
       </div>
     </div>
 
@@ -55,6 +54,23 @@
         <button id="tE" class="e" type="button">E</button>
         <button id="tSkate" type="button">Skate</button>
         <button id="tCar" type="button">SUV</button>
+      </div>
+    </div>
+
+    <div id="travel" hidden role="dialog" aria-modal="true" aria-labelledby="tTitle">
+      <div class="tpanel card">
+        <div class="thead">
+          <div>
+            <div class="eyebrow">Galleria area · Dallas</div>
+            <h2 id="tTitle">Fast travel</h2>
+          </div>
+          <button id="tClose" type="button" aria-label="Close the map">✕</button>
+        </div>
+        <div class="tbody">
+          <canvas id="tmap"></canvas>
+          <div id="tlist"></div>
+        </div>
+        <div id="tmsg" aria-live="polite"></div>
       </div>
     </div>
 

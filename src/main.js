@@ -29,6 +29,7 @@ import './interiors/doors.js';
 import './player/physics.js';
 import './view/camera.js';
 import './ui/hud.js';
+import { SPOTS, toggleTravel, travel } from './ui/travel.js';
 import { state } from './core/state.js';
 import { $ } from './core/util.js';
 import { DOORS } from './world/layout.js';
@@ -164,6 +165,13 @@ if (import.meta.env.DEV || new URLSearchParams(location.search).has('debug')) {
     outside() {
       state.mode = 'out';
       scene.add(ph.g);
+    },
+    // fast travel to a named spot from the map's list, or open/close the map
+    fastTravel(name) {
+      travel(SPOTS.find((s) => s.n === name));
+    },
+    toggleMap() {
+      toggleTravel();
     },
     toggleDrive() {
       toggleCar();

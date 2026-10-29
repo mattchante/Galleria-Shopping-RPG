@@ -33,7 +33,7 @@ GitHub Pages: in the repo's Settings → Pages, set Source to **GitHub Actions**
 | Tab                   | Get in / out of the black SUV                              |
 | Space                 | Jump, tap again to double jump (handbrake in the SUV)      |
 | E                     | Enter / exit doors, free the mouse at Apple product tables |
-| M                     | Bigger map                                                 |
+| M                     | Map: click a pin, a place or any street to fast travel     |
 | Wheel                 | Camera distance                                            |
 
 Phones get an on-screen stick and buttons.

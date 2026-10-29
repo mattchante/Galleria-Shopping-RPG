@@ -1,4 +1,4 @@
-// HUD: clock, movement readout, door prompts and the Apple product card.
+// HUD: movement readout, door prompts and the Apple product card.
 import { state } from '../core/state.js';
 import { $ } from '../core/util.js';
 import { canvas, isTouch } from '../core/renderer.js';
@@ -21,26 +21,11 @@ import {
 } from '../interiors/doors.js';
 
 /* ---------- HUD ---------- */
-const timeEl = $('#time'),
-  dayEl = $('#day'),
-  moveModeEl = $('#moveMode'),
+const moveModeEl = $('#moveMode'),
   moveSpdEl = $('#moveSpd');
-function fmtTime(m) {
-  m = Math.floor(m) % 1440;
-  let h = Math.floor(m / 60);
-  const mi = m % 60,
-    ap = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return h + ':' + String(mi).padStart(2, '0') + ' ' + ap;
-}
 let hudT = 0;
 function stepHUD(dt) {
   hudT += dt;
-  state.clockMin += dt * 6;
-  if (state.clockMin >= 1440) {
-    state.clockMin -= 1440;
-    state.dayN++;
-  }
   const prod =
     !state.busy && state.mode === 'room' && state.curRoom.productAt ? state.curRoom.productAt(P.pos) : null;
   if (prod !== state.shopCur) {
@@ -77,8 +62,6 @@ function stepHUD(dt) {
             ? 'Sprinting'
             : 'On foot';
     moveSpdEl.textContent = Math.round((V.active ? Math.abs(V.speed) : Math.hypot(P.vel.x, P.vel.z)) * 2.237);
-    timeEl.textContent = fmtTime(state.clockMin);
-    dayEl.textContent = 'Day ' + state.dayN;
     const [n, s, e] = locate();
     const key = n + s + e;
     if (key !== state.lastLoc) {

@@ -108,10 +108,9 @@ MAP.height = MH;
 const mm = $('#minimap'),
   mg = mm.getContext('2d'),
   mapWrap = $('#mapWrap');
-state.mapBig = false;
 function drawMinimap() {
   const S = mm.width,
-    Rm = state.mapBig ? 230 : 100;
+    Rm = 100;
   mg.clearRect(0, 0, S, S);
   mg.save();
   mg.beginPath();
@@ -189,4 +188,4 @@ function drawMinimap() {
   mg.restore();
 }
 
-export { drawMinimap, mapWrap };
+export { MAP, MS, drawMinimap, mapWrap };

@@ -119,8 +119,6 @@ parked.forEach((p, k) => {
 for (const k in IM) if (IM[k].instanceColor) IM[k].instanceColor.needsUpdate = true;
 /* ---------- simulation ---------- */
 state.sigT = 4;
-state.clockMin = 17 * 60 + 40;
-state.dayN = 1;
 function sig(axis) {
   const t = state.sigT % 36;
   if (axis === 'z') return t < 14 ? 'g' : t < 17 ? 'y' : 'r';

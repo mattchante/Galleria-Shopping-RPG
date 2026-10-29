@@ -24,7 +24,7 @@ addEventListener('keydown', (e) => {
   keys[e.code] = true;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyE' && !e.repeat) late.interact();
-  if (e.code === 'KeyM' && !e.repeat) toggleMap();
+  if (e.code === 'KeyM' && !e.repeat) late.toggleTravel();
 });
 addEventListener('keyup', (e) => {
   keys[e.code] = false;
@@ -63,10 +63,6 @@ canvas.addEventListener(
   },
   { passive: false },
 );
-function toggleMap() {
-  state.mapBig = !state.mapBig;
-  mapWrap.classList.toggle('big', state.mapBig && !isTouch);
-}
 const stick = { id: null, x: 0, y: 0, cx: 0, cy: 0 },
   look = { id: null, lx: 0, ly: 0 };
 let skateToggle = false;
@@ -148,7 +144,7 @@ if (isTouch) {
   });
   mapWrap.style.cssText =
     'bottom:auto;left:auto;top:calc(64px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));width:128px;height:128px;pointer-events:auto';
-  mapWrap.addEventListener('click', toggleMap);
+  mapWrap.addEventListener('click', () => late.toggleTravel());
   $('#promptKey').textContent = 'Tap E';
 }
 
